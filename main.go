@@ -12,5 +12,7 @@ func main() {
 
 	router.GET("/feeds", controllers.GetFeeds)
 
+	router.POST("/feeds", controllers.CreateFeed)
+
 	router.Run()
 }

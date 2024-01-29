@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var db *gorm.DB
 
 func ConnectDatabase() {
 	database, err := gorm.Open(sqlite.Open("pcast.db"), &gorm.Config{})
@@ -15,7 +15,23 @@ func ConnectDatabase() {
 		panic("Failed to connect to database!")
 	}
 
-	database.AutoMigrate(&Feed{})
+	mErr := database.AutoMigrate(&Feed{})
 
-	DB = database
+	if mErr != nil {
+		panic("Failed to connect to database!")
+	}
+
+	db = database
+}
+
+func GetFeeds() []Feed {
+	var feeds []Feed
+
+	db.Find(&feeds)
+
+	return feeds
+}
+
+func CreateFeed(feed *Feed) {
+	db.Create(feed)
 }
