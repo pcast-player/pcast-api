@@ -1,18 +1,20 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+	"github.com/labstack/echo/v4"
 	"pcast-api/controllers"
 	"pcast-api/models"
+	"pcast-api/validation"
 )
 
 func main() {
 	models.ConnectDatabase()
-	router := gin.Default()
+	e := echo.New()
+	e.Validator = &validation.ApiValidator{Validator: validator.New()}
 
-	router.GET("/feeds", controllers.GetFeeds)
+	e.GET("/feeds", controllers.GetFeeds)
+	e.POST("/feeds", controllers.CreateFeed)
 
-	router.POST("/feeds", controllers.CreateFeed)
-
-	router.Run()
+	e.Logger.Fatal(e.Start(":8080"))
 }

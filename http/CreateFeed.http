@@ -1,0 +1,6 @@
+POST http://localhost:8080/feeds
+Content-Type: application/json
+
+{
+  "url": "https://feeds.soundcloud.com/users/soundcloud:users:21436304/sounds.rss"
+}

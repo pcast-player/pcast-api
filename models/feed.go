@@ -1,10 +1,12 @@
 package models
 
+import "gorm.io/gorm"
+
 type Feed struct {
-	Id  int    `json:"id" gorm:"primary_key"`
-	Url string `json:"url"`
+	gorm.Model
+	URL string
 }
 
-type CreateFeedInput struct {
-	Url string `json:"url" binding:"required"`
+type CreateFeedRequest struct {
+	URL string `json:"url" validate:"required,url"`
 }

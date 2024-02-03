@@ -1,26 +1,29 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"pcast-api/models"
 )
 
-func GetFeeds(c *gin.Context) {
-	c.JSON(http.StatusOK, models.GetFeeds())
+func GetFeeds(c echo.Context) error {
+	return c.JSON(http.StatusOK, models.GetFeeds())
 }
 
-func CreateFeed(c *gin.Context) {
-	var input models.CreateFeedInput
+func CreateFeed(c echo.Context) error {
+	feedRequest := new(models.CreateFeedRequest)
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.Bind(feedRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	feed := models.Feed{Url: input.Url}
+	if err := c.Validate(feedRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	feed := models.Feed{URL: feedRequest.URL}
 
 	models.CreateFeed(&feed)
 
-	c.JSON(http.StatusOK, feed)
+	return c.NoContent(http.StatusCreated)
 }
