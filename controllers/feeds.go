@@ -2,28 +2,41 @@ package controllers
 
 import (
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 	"net/http"
 	"pcast-api/models"
 )
 
-func GetFeeds(c echo.Context) error {
-	return c.JSON(http.StatusOK, models.GetFeeds())
+type FeedsController struct {
+	db *gorm.DB
 }
 
-func CreateFeed(c echo.Context) error {
+func NewFeedsController(db *gorm.DB) *FeedsController {
+	return &FeedsController{db: db}
+}
+
+func (c *FeedsController) GetFeeds(context echo.Context) error {
+	var feeds []models.Feed
+
+	c.db.Find(&feeds)
+
+	return context.JSON(http.StatusOK, feeds)
+}
+
+func (c *FeedsController) CreateFeed(context echo.Context) error {
 	feedRequest := new(models.CreateFeedRequest)
 
-	if err := c.Bind(feedRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+	if err := context.Bind(feedRequest); err != nil {
+		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if err := c.Validate(feedRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+	if err := context.Validate(feedRequest); err != nil {
+		return context.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	feed := models.Feed{URL: feedRequest.URL}
 
-	models.CreateFeed(&feed)
+	c.db.Create(&feed)
 
-	return c.NoContent(http.StatusCreated)
+	return context.NoContent(http.StatusCreated)
 }

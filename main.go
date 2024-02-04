@@ -1,20 +1,21 @@
 package main
 
 import (
-	"github.com/go-playground/validator"
-	"github.com/labstack/echo/v4"
 	"pcast-api/controllers"
-	"pcast-api/models"
-	"pcast-api/validation"
+	"pcast-api/db"
+	"pcast-api/router"
 )
 
 func main() {
-	models.ConnectDatabase()
-	e := echo.New()
-	e.Validator = &validation.ApiValidator{Validator: validator.New()}
+	r := router.New()
 
-	e.GET("/feeds", controllers.GetFeeds)
-	e.POST("/feeds", controllers.CreateFeed)
+	d := db.New()
+	db.AutoMigrate(d)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	feedsController := controllers.NewFeedsController(d)
+
+	r.GET("/feeds", feedsController.GetFeeds)
+	r.POST("/feeds", feedsController.CreateFeed)
+
+	r.Logger.Fatal(r.Start(":8080"))
 }
