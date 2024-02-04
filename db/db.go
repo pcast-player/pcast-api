@@ -3,7 +3,7 @@ package db
 import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"pcast-api/models"
+	"pcast-api/model"
 )
 
 func New() *gorm.DB {
@@ -17,5 +17,5 @@ func New() *gorm.DB {
 }
 
 func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&models.Feed{})
+	db.AutoMigrate(&model.Feed{})
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"pcast-api/controllers"
+	"pcast-api/controller"
 	"pcast-api/db"
 	"pcast-api/router"
 )
@@ -12,7 +12,7 @@ func main() {
 	d := db.New()
 	db.AutoMigrate(d)
 
-	feedsController := controllers.NewFeedsController(d)
+	feedsController := controller.NewFeedController(d)
 
 	r.GET("/feeds", feedsController.GetFeeds)
 	r.POST("/feeds", feedsController.CreateFeed)
