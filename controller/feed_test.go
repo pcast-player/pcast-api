@@ -41,7 +41,7 @@ func (m *MockFeedStore) Delete(feed *model.Feed) error {
 
 func TestGetFeedsReturnsFeeds(t *testing.T) {
 	mockStore := new(MockFeedStore)
-	mockFeed := &model.Feed{URL: "http://example.com"}
+	mockFeed := &model.Feed{URL: "https://example.com"}
 	mockStore.On("FindAll").Return([]model.Feed{*mockFeed}, nil)
 
 	feedController := New(mockStore)
@@ -55,7 +55,7 @@ func TestGetFeedsReturnsFeeds(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, `[{"id":"00000000-0000-0000-0000-000000000000","url":"http://example.com"}]`+"\n", rec.Body.String())
+	assert.Equal(t, `[{"id":"00000000-0000-0000-0000-000000000000","url":"https://example.com"}]`+"\n", rec.Body.String())
 	mockStore.AssertExpectations(t)
 }
 
@@ -121,7 +121,7 @@ func TestCreateFeedReturnsUrlValidationError(t *testing.T) {
 
 func TestDeleteFeedReturnsNoContent(t *testing.T) {
 	mockStore := new(MockFeedStore)
-	mockFeed := &model.Feed{URL: "http://example.com"}
+	mockFeed := &model.Feed{URL: "https://example.com"}
 	mockStore.On("FindByID", mock.AnythingOfType("uuid.UUID")).Return(mockFeed, nil)
 	mockStore.On("Delete", mockFeed).Return(nil)
 
