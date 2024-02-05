@@ -17,5 +17,9 @@ func New() *gorm.DB {
 }
 
 func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&model.Feed{})
+	err := db.AutoMigrate(&model.Feed{})
+
+	if err != nil {
+		panic("Failed to migrate database!")
+	}
 }
