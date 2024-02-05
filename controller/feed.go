@@ -2,23 +2,21 @@ package controller
 
 import (
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 	"net/http"
 	"pcast-api/model"
+	"pcast-api/store"
 )
 
 type FeedController struct {
-	db *gorm.DB
+	store *store.FeedStore
 }
 
-func NewFeedController(db *gorm.DB) *FeedController {
-	return &FeedController{db: db}
+func NewFeedController(store *store.FeedStore) *FeedController {
+	return &FeedController{store: store}
 }
 
 func (c *FeedController) GetFeeds(context echo.Context) error {
-	var feeds []model.Feed
-
-	c.db.Find(&feeds)
+	feeds, _ := c.store.FindAll()
 
 	return context.JSON(http.StatusOK, feeds)
 }
@@ -36,7 +34,11 @@ func (c *FeedController) CreateFeed(context echo.Context) error {
 
 	feed := model.Feed{URL: feedRequest.URL}
 
-	c.db.Create(&feed)
+	err := c.store.Create(&feed)
+
+	if err != nil {
+		return context.NoContent(http.StatusBadRequest)
+	}
 
 	return context.NoContent(http.StatusCreated)
 }
