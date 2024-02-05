@@ -79,7 +79,7 @@ const docTemplate = `{
                 "summary": "Delete a feed",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Feed ID",
                         "name": "id",
                         "in": "path",
@@ -109,13 +109,7 @@ const docTemplate = `{
         "model.Feed": {
             "type": "object",
             "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
                 "id": {
-                    "type": "integer"
-                },
-                "updatedAt": {
                     "type": "string"
                 },
                 "url": {

@@ -9,11 +9,7 @@ definitions:
     type: object
   model.Feed:
     properties:
-      createdAt:
-        type: string
       id:
-        type: integer
-      updatedAt:
         type: string
       url:
         type: string
@@ -68,7 +64,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: Feed deleted successfully

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"pcast-api/model"
 )
@@ -27,7 +28,7 @@ func (s *FeedStore) Create(feed *model.Feed) error {
 	return s.db.Create(feed).Error
 }
 
-func (s *FeedStore) FindByID(id uint) (*model.Feed, error) {
+func (s *FeedStore) FindByID(id uuid.UUID) (*model.Feed, error) {
 	var feed model.Feed
 
 	if err := s.db.First(&feed, id).Error; err != nil {

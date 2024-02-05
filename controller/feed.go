@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"pcast-api/model"
 	"pcast-api/store"
-	"strconv"
 )
 
 type FeedController struct {
@@ -68,17 +68,17 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 // @Summary Delete a feed
 // @Description Delete a feed with the given ID
 // @Tags feeds
-// @Param id path int true "Feed ID"
+// @Param id path string true "Feed ID"
 // @Success 200 "Feed deleted successfully"
 // @Router /feeds/{id} [delete]
 func (f *FeedController) DeleteFeed(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	UUID, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	feed, err := f.store.FindByID(uint(id))
+	feed, err := f.store.FindByID(UUID)
 
 	if err != nil {
 		return c.NoContent(http.StatusNotFound)
