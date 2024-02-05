@@ -34,6 +34,8 @@ go run main.go
 
 The API will be available at http://localhost:8080.
 
+There is also an API documentation available at http://localhost:8080/swagger/.
+
 ### Testing
 
 ```bash
