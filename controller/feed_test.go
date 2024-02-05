@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 	"net/http/httptest"
-	"pcast-api/router"
+	"pcast-api/router/validator"
 	"strings"
 	"testing"
 
@@ -66,8 +66,8 @@ func TestCreateFeedReturnsCreatedFeed(t *testing.T) {
 	feedController := New(mockStore)
 
 	e := echo.New()
-	e.Validator = router.NewValidator()
-	req := httptest.NewRequest(http.MethodPost, "/feeds", strings.NewReader(`{"url":"http://example.com"}`))
+	e.Validator = validator.New()
+	req := httptest.NewRequest(http.MethodPost, "/feeds", strings.NewReader(`{"url":"https://example.com"}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -76,6 +76,46 @@ func TestCreateFeedReturnsCreatedFeed(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code)
+	mockStore.AssertExpectations(t)
+}
+
+func TestCreateFeedReturnsPropertyNameValidationError(t *testing.T) {
+	mockStore := new(MockFeedStore)
+
+	feedController := New(mockStore)
+
+	e := echo.New()
+	e.Validator = validator.New()
+	req := httptest.NewRequest(http.MethodPost, "/feeds", strings.NewReader(`{"ur":"https://example.com"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := feedController.CreateFeed(c)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "\"code=400, message=Key: 'CreateFeedRequest.URL' Error:Field validation for 'URL' failed on the 'required' tag\"\n", rec.Body.String())
+	mockStore.AssertExpectations(t)
+}
+
+func TestCreateFeedReturnsUrlValidationError(t *testing.T) {
+	mockStore := new(MockFeedStore)
+
+	feedController := New(mockStore)
+
+	e := echo.New()
+	e.Validator = validator.New()
+	req := httptest.NewRequest(http.MethodPost, "/feeds", strings.NewReader(`{"url":"://example.com"}`))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := feedController.CreateFeed(c)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "\"code=400, message=Key: 'CreateFeedRequest.URL' Error:Field validation for 'URL' failed on the 'url' tag\"\n", rec.Body.String())
 	mockStore.AssertExpectations(t)
 }
 

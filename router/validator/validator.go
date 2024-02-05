@@ -1,4 +1,4 @@
-package router
+package validator
 
 import (
 	"github.com/go-playground/validator"
@@ -10,7 +10,7 @@ type Validator struct {
 	Validator *validator.Validate
 }
 
-func NewValidator() *Validator {
+func New() *Validator {
 	return &Validator{Validator: validator.New()}
 }
 
