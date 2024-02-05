@@ -15,7 +15,7 @@ type Feed struct {
 	URL       string    `json:"url"`
 }
 
-func (feed *Feed) BeforeCreate(tx *gorm.DB) (err error) {
+func (feed *Feed) BeforeCreate(_ *gorm.DB) (err error) {
 	feed.ID = uuid.New()
 
 	return nil
