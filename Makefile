@@ -5,7 +5,7 @@ install:
 	go install github.com/swaggo/swag/cmd/swag@latest
 
 build:
-	go build -race  .
+	go build -o target/ -race .
 
 test:
 	go test -v -race ./...
