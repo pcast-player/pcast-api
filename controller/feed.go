@@ -11,7 +11,7 @@ type FeedController struct {
 	store *store.FeedStore
 }
 
-func NewFeedController(store *store.FeedStore) *FeedController {
+func New(store *store.FeedStore) *FeedController {
 	return &FeedController{store: store}
 }
 

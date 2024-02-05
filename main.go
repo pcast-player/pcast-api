@@ -14,8 +14,8 @@ func main() {
 
 	db.AutoMigrate(d)
 
-	feedStore := store.NewFeedStore(d)
-	feedController := controller.NewFeedController(feedStore)
+	feedStore := store.New(d)
+	feedController := controller.New(feedStore)
 
 	feedController.Register(apiV1)
 

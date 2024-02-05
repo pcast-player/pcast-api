@@ -9,7 +9,7 @@ type FeedStore struct {
 	db *gorm.DB
 }
 
-func NewFeedStore(db *gorm.DB) *FeedStore {
+func New(db *gorm.DB) *FeedStore {
 	return &FeedStore{db: db}
 }
 
