@@ -15,6 +15,13 @@ func New(store *store.FeedStore) *FeedController {
 	return &FeedController{store: store}
 }
 
+// GetFeeds godoc
+// @Summary Get all feeds
+// @Description Retrieve all feeds from the store
+// @Tags feeds
+// @Produce json
+// @Success 200 {array} model.Feed
+// @Router /feeds [get]
 func (c *FeedController) GetFeeds(context echo.Context) error {
 	feeds, err := c.store.FindAll()
 
@@ -25,6 +32,15 @@ func (c *FeedController) GetFeeds(context echo.Context) error {
 	return context.JSON(http.StatusOK, feeds)
 }
 
+// CreateFeed godoc
+// @Summary Create a new feed
+// @Description Create a new feed with the data provided in the request
+// @Tags feeds
+// @Accept json
+// @Produce json
+// @Param feed body model.CreateFeedRequest true "Feed data"
+// @Success 201 {string} string "Feed created successfully"
+// @Router /feeds [post]
 func (c *FeedController) CreateFeed(context echo.Context) error {
 	feedRequest := new(model.CreateFeedRequest)
 

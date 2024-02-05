@@ -1,0 +1,73 @@
+basePath: /api
+definitions:
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  model.CreateFeedRequest:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  model.Feed:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      updatedAt:
+        type: string
+      url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: Swagger Example API
+  version: "0.1"
+paths:
+  /feeds:
+    get:
+      description: Retrieve all feeds from the store
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Feed'
+            type: array
+      summary: Get all feeds
+      tags:
+      - feeds
+    post:
+      consumes:
+      - application/json
+      description: Create a new feed with the data provided in the request
+      parameters:
+      - description: Feed data
+        in: body
+        name: feed
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateFeedRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Feed created successfully
+          schema:
+            type: string
+      summary: Create a new feed
+      tags:
+      - feeds
+swagger: "2.0"
