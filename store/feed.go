@@ -26,3 +26,17 @@ func (s *FeedStore) FindAll() ([]model.Feed, error) {
 func (s *FeedStore) Create(feed *model.Feed) error {
 	return s.db.Create(feed).Error
 }
+
+func (s *FeedStore) FindByID(id uint) (*model.Feed, error) {
+	var feed model.Feed
+
+	if err := s.db.First(&feed, id).Error; err != nil {
+		return nil, err
+	}
+
+	return &feed, nil
+}
+
+func (s *FeedStore) Delete(feed *model.Feed) error {
+	return s.db.Delete(feed).Error
+}

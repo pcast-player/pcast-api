@@ -62,28 +62,39 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Feed created successfully",
+                        "description": "Created",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.Feed"
                         }
+                    }
+                }
+            }
+        },
+        "/feeds/{id}": {
+            "delete": {
+                "description": "Delete a feed with the given ID",
+                "tags": [
+                    "feeds"
+                ],
+                "summary": "Delete a feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Feed ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Feed deleted successfully"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "gorm.DeletedAt": {
-            "type": "object",
-            "properties": {
-                "time": {
-                    "type": "string"
-                },
-                "valid": {
-                    "description": "Valid is true if Time is not NULL",
-                    "type": "boolean"
-                }
-            }
-        },
         "model.CreateFeedRequest": {
             "type": "object",
             "required": [
@@ -100,9 +111,6 @@ const docTemplate = `{
             "properties": {
                 "createdAt": {
                     "type": "string"
-                },
-                "deletedAt": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
                 },
                 "id": {
                     "type": "integer"

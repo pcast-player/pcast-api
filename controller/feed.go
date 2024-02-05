@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"pcast-api/model"
 	"pcast-api/store"
+	"strconv"
 )
 
 type FeedController struct {
@@ -22,14 +23,14 @@ func New(store *store.FeedStore) *FeedController {
 // @Produce json
 // @Success 200 {array} model.Feed
 // @Router /feeds [get]
-func (c *FeedController) GetFeeds(context echo.Context) error {
-	feeds, err := c.store.FindAll()
+func (f *FeedController) GetFeeds(c echo.Context) error {
+	feeds, err := f.store.FindAll()
 
 	if err != nil {
-		return context.NoContent(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	return context.JSON(http.StatusOK, feeds)
+	return c.JSON(http.StatusOK, feeds)
 }
 
 // CreateFeed godoc
@@ -39,31 +40,59 @@ func (c *FeedController) GetFeeds(context echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param feed body model.CreateFeedRequest true "Feed data"
-// @Success 201 {string} string "Feed created successfully"
+// @Success 201 {object} model.Feed
 // @Router /feeds [post]
-func (c *FeedController) CreateFeed(context echo.Context) error {
+func (f *FeedController) CreateFeed(c echo.Context) error {
 	feedRequest := new(model.CreateFeedRequest)
 
-	if err := context.Bind(feedRequest); err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
+	if err := c.Bind(feedRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if err := context.Validate(feedRequest); err != nil {
-		return context.JSON(http.StatusBadRequest, err.Error())
+	if err := c.Validate(feedRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	feed := model.Feed{URL: feedRequest.URL}
 
-	err := c.store.Create(&feed)
+	err := f.store.Create(&feed)
 
 	if err != nil {
-		return context.NoContent(http.StatusBadRequest)
+		return c.NoContent(http.StatusBadRequest)
 	}
 
-	return context.JSON(http.StatusCreated, feed)
+	return c.JSON(http.StatusCreated, feed)
 }
 
-func (c *FeedController) Register(group *echo.Group) {
-	group.GET("/feeds", c.GetFeeds)
-	group.POST("/feeds", c.CreateFeed)
+// DeleteFeed godoc
+// @Summary Delete a feed
+// @Description Delete a feed with the given ID
+// @Tags feeds
+// @Param id path int true "Feed ID"
+// @Success 200 "Feed deleted successfully"
+// @Router /feeds/{id} [delete]
+func (f *FeedController) DeleteFeed(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	feed, err := f.store.FindByID(uint(id))
+
+	if err != nil {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	if err = f.store.Delete(feed); err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (f *FeedController) Register(g *echo.Group) {
+	g.GET("/feeds", f.GetFeeds)
+	g.POST("/feeds", f.CreateFeed)
+	g.DELETE("/feeds/:id", f.DeleteFeed)
 }

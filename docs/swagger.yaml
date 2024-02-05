@@ -1,13 +1,5 @@
 basePath: /api
 definitions:
-  gorm.DeletedAt:
-    properties:
-      time:
-        type: string
-      valid:
-        description: Valid is true if Time is not NULL
-        type: boolean
-    type: object
   model.CreateFeedRequest:
     properties:
       url:
@@ -19,8 +11,6 @@ definitions:
     properties:
       createdAt:
         type: string
-      deletedAt:
-        $ref: '#/definitions/gorm.DeletedAt'
       id:
         type: integer
       updatedAt:
@@ -64,10 +54,25 @@ paths:
       - application/json
       responses:
         "201":
-          description: Feed created successfully
+          description: Created
           schema:
-            type: string
+            $ref: '#/definitions/model.Feed'
       summary: Create a new feed
+      tags:
+      - feeds
+  /feeds/{id}:
+    delete:
+      description: Delete a feed with the given ID
+      parameters:
+      - description: Feed ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Feed deleted successfully
+      summary: Delete a feed
       tags:
       - feeds
 swagger: "2.0"
