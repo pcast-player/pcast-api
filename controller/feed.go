@@ -4,15 +4,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"pcast-api/feed"
 	"pcast-api/model"
-	"pcast-api/store"
 )
 
 type FeedController struct {
-	store *store.FeedStore
+	store feed.Store
 }
 
-func New(store *store.FeedStore) *FeedController {
+func New(store feed.Store) *FeedController {
 	return &FeedController{store: store}
 }
 
@@ -58,6 +58,7 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 	err := f.store.Create(&feed)
 
 	if err != nil {
+		println("store error", err.Error())
 		return c.NoContent(http.StatusBadRequest)
 	}
 

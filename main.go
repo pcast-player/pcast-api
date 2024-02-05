@@ -9,7 +9,7 @@ import (
 	"pcast-api/store"
 )
 
-// @title Swagger Example API
+// @title PCast REST-API
 // @version 0.1
 // @BasePath  /api
 // @host localhost:8080

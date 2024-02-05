@@ -17,7 +17,7 @@ definitions:
 host: localhost:8080
 info:
   contact: {}
-  title: Swagger Example API
+  title: PCast REST-API
   version: "0.1"
 paths:
   /feeds:
