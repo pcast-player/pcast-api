@@ -1,12 +1,16 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"time"
+)
 
 // Feed is a model for a podcast feed
 // @model Feed
 type Feed struct {
-	gorm.Model
-	URL string
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	URL       string    `json:"url"`
 }
 
 // CreateFeedRequest is a model for a request to create a new feed
