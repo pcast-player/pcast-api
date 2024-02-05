@@ -1,1 +1,1 @@
-GET http://localhost:8080/feeds
+GET http://localhost:8080/api/feeds

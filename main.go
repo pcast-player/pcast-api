@@ -9,15 +9,15 @@ import (
 
 func main() {
 	r := router.New()
-
+	apiV1 := r.Group("/api")
 	d := db.New()
+
 	db.AutoMigrate(d)
 
 	feedStore := store.NewFeedStore(d)
 	feedController := controller.NewFeedController(feedStore)
 
-	r.GET("/feeds", feedController.GetFeeds)
-	r.POST("/feeds", feedController.CreateFeed)
+	feedController.Register(apiV1)
 
 	r.Logger.Fatal(r.Start(":8080"))
 }

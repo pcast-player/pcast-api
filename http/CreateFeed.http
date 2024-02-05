@@ -1,4 +1,4 @@
-POST http://localhost:8080/feeds
+POST http://localhost:8080/api/feeds
 Content-Type: application/json
 
 {
