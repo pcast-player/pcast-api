@@ -16,7 +16,11 @@ func NewFeedController(store *store.FeedStore) *FeedController {
 }
 
 func (c *FeedController) GetFeeds(context echo.Context) error {
-	feeds, _ := c.store.FindAll()
+	feeds, err := c.store.FindAll()
+
+	if err != nil {
+		return context.NoContent(http.StatusInternalServerError)
+	}
 
 	return context.JSON(http.StatusOK, feeds)
 }
