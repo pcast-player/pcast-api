@@ -60,7 +60,7 @@ func (c *FeedController) CreateFeed(context echo.Context) error {
 		return context.NoContent(http.StatusBadRequest)
 	}
 
-	return context.NoContent(http.StatusCreated)
+	return context.JSON(http.StatusCreated, feed)
 }
 
 func (c *FeedController) Register(group *echo.Group) {
