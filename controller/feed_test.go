@@ -42,24 +42,22 @@ func newApp() *echo.Echo {
 	return r
 }
 
-func getBody(t *testing.T, result *apitest.Result) string {
+func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	bytes, err := io.ReadAll(result.Response.Body)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return string(bytes)
-}
-
-func unmarshal(t *testing.T, result *apitest.Result, v interface{}) {
-	body := getBody(t, result)
-
-	err := json.Unmarshal([]byte(body), v)
+	body := string(bytes)
+	m := new(M)
+	err = json.Unmarshal([]byte(body), m)
 
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	return m
 }
 
 func TestGetFeeds(t *testing.T) {
@@ -125,8 +123,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	var feed model.Feed
-	unmarshal(t, &result, &feed)
+	feed := unmarshal[model.Feed](t, &result)
 
 	apitest.New().
 		Handler(newApp()).
