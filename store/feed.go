@@ -16,7 +16,6 @@ func New(db *gorm.DB) *FeedStore {
 
 func (s *FeedStore) FindAll() ([]model.Feed, error) {
 	var feeds []model.Feed
-
 	if err := s.db.Find(&feeds).Error; err != nil {
 		return nil, err
 	}
@@ -30,7 +29,6 @@ func (s *FeedStore) Create(feed *model.Feed) error {
 
 func (s *FeedStore) FindByID(id uuid.UUID) (*model.Feed, error) {
 	var feed model.Feed
-
 	if err := s.db.First(&feed, id).Error; err != nil {
 		return nil, err
 	}

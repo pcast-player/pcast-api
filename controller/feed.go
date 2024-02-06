@@ -25,7 +25,6 @@ func New(store feed.Store) *FeedController {
 // @Router /feeds [get]
 func (f *FeedController) GetFeeds(c echo.Context) error {
 	feeds, err := f.store.FindAll()
-
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -44,25 +43,22 @@ func (f *FeedController) GetFeeds(c echo.Context) error {
 // @Router /feeds [post]
 func (f *FeedController) CreateFeed(c echo.Context) error {
 	feedRequest := new(model.CreateFeedRequest)
-
 	if err := c.Bind(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-
 	if err := c.Validate(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	feed := model.Feed{URL: feedRequest.URL}
+	fd := model.Feed{URL: feedRequest.URL}
 
-	err := f.store.Create(&feed)
-
+	err := f.store.Create(&fd)
 	if err != nil {
 		println("store error", err.Error())
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	return c.JSON(http.StatusCreated, feed)
+	return c.JSON(http.StatusCreated, fd)
 }
 
 // DeleteFeed godoc
@@ -74,18 +70,15 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 // @Router /feeds/{id} [delete]
 func (f *FeedController) DeleteFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
-
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	feed, err := f.store.FindByID(UUID)
-
+	fd, err := f.store.FindByID(UUID)
 	if err != nil {
 		return c.NoContent(http.StatusNotFound)
 	}
-
-	if err = f.store.Delete(feed); err != nil {
+	if err = f.store.Delete(fd); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

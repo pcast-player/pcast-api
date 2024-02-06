@@ -44,7 +44,6 @@ func newApp() *echo.Echo {
 
 func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	bytes, err := io.ReadAll(result.Response.Body)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +51,6 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	body := string(bytes)
 	m := new(M)
 	err = json.Unmarshal([]byte(body), m)
-
 	if err != nil {
 		t.Fatal(err)
 	}

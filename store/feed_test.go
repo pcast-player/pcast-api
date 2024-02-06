@@ -25,7 +25,6 @@ func TestMain(m *testing.M) {
 func setup() {
 	d = db.NewTestDB()
 	err := d.AutoMigrate(&model.Feed{})
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,7 +39,6 @@ func TestCreateFeed(t *testing.T) {
 
 	feed := &model.Feed{URL: "https://example.com"}
 	err := feedStore.Create(feed)
-
 	assert.NoError(t, err)
 
 	db.TruncateTables(d)
@@ -50,7 +48,6 @@ func TestFindFeedByID(t *testing.T) {
 	feedStore := New(d)
 
 	feed := &model.Feed{URL: "https://example.com"}
-
 	if err := feedStore.Create(feed); err != nil {
 		log.Fatal(err)
 	}
@@ -67,13 +64,11 @@ func TestDeleteFeed(t *testing.T) {
 	feedStore := New(d)
 
 	feed := &model.Feed{URL: "https://example.com"}
-
 	if err := feedStore.Create(feed); err != nil {
 		log.Fatal(err)
 	}
 
 	err := feedStore.Delete(feed)
-
 	assert.NoError(t, err)
 
 	db.TruncateTables(d)
