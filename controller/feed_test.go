@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 }
 
 func newApp() *echo.Echo {
-	r := router.New()
+	r := router.NewTestRouter()
 	apiV1 := r.Group("/api")
 
 	feedStore := store.New(d)

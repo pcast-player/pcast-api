@@ -17,3 +17,10 @@ func New() *echo.Echo {
 
 	return e
 }
+
+func NewTestRouter() *echo.Echo {
+	e := echo.New()
+	e.Validator = validator.New()
+
+	return e
+}
