@@ -16,7 +16,10 @@ type Feed struct {
 }
 
 func (feed *Feed) BeforeCreate(_ *gorm.DB) (err error) {
-	feed.ID = uuid.New()
+	feed.ID, err = uuid.NewV7()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
