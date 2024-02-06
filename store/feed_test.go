@@ -2,25 +2,15 @@ package store
 
 import (
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"pcast-api/db"
 	"pcast-api/model"
 	"testing"
 )
 
-var db *gorm.DB
-
-func setupDatabase() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("./../pcast-test.db"), &gorm.Config{})
-
-	if err != nil {
-		panic("failed to connect database")
-	}
-
-	return db
-}
+var d *gorm.DB
 
 func TestMain(m *testing.M) {
 	setup()
@@ -33,16 +23,8 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	db = setupDatabase()
-	err := db.AutoMigrate(&model.Feed{})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func resetDatabase() {
-	err := db.Exec("DELETE FROM feeds;").Error
+	d = db.NewTestDB()
+	err := d.AutoMigrate(&model.Feed{})
 
 	if err != nil {
 		log.Fatal(err)
@@ -50,26 +32,22 @@ func resetDatabase() {
 }
 
 func tearDown() {
-	err := db.Migrator().DropTable(&model.Feed{})
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	db.RemoveTables(d)
 }
 
 func TestCreateFeed(t *testing.T) {
-	feedStore := New(db)
+	feedStore := New(d)
 
 	feed := &model.Feed{URL: "https://example.com"}
 	err := feedStore.Create(feed)
 
 	assert.NoError(t, err)
 
-	resetDatabase()
+	db.TruncateTables(d)
 }
 
 func TestFindFeedByID(t *testing.T) {
-	feedStore := New(db)
+	feedStore := New(d)
 
 	feed := &model.Feed{URL: "https://example.com"}
 
@@ -82,11 +60,11 @@ func TestFindFeedByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
-	resetDatabase()
+	db.TruncateTables(d)
 }
 
 func TestDeleteFeed(t *testing.T) {
-	feedStore := New(db)
+	feedStore := New(d)
 
 	feed := &model.Feed{URL: "https://example.com"}
 
@@ -98,5 +76,5 @@ func TestDeleteFeed(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	resetDatabase()
+	db.TruncateTables(d)
 }

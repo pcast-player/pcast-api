@@ -21,10 +21,20 @@ func New() *gorm.DB {
 		},
 	)
 
-	db, err := gorm.Open(sqlite.Open("pcast.db"), &gorm.Config{Logger: newLogger})
+	db, err := gorm.Open(sqlite.Open("./pcast.db"), &gorm.Config{Logger: newLogger})
 
 	if err != nil {
 		panic("Failed to connect to database!")
+	}
+
+	return db
+}
+
+func NewTestDB() *gorm.DB {
+	db, err := gorm.Open(sqlite.Open("./../pcast-test.db"), &gorm.Config{})
+
+	if err != nil {
+		panic("failed to connect database")
 	}
 
 	return db
@@ -35,5 +45,21 @@ func AutoMigrate(db *gorm.DB) {
 
 	if err != nil {
 		panic("Failed to migrate database!")
+	}
+}
+
+func TruncateTables(db *gorm.DB) {
+	err := db.Exec("DELETE FROM feeds;").Error
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func RemoveTables(db *gorm.DB) {
+	err := db.Migrator().DropTable(&model.Feed{})
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
