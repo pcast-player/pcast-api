@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"pcast-api/feed"
 	"pcast-api/model"
+	"pcast-api/request"
+	"pcast-api/response"
 )
 
 type FeedController struct {
@@ -21,7 +23,7 @@ func New(store feed.Store) *FeedController {
 // @Description Retrieve all feeds from the store
 // @Tags feeds
 // @Produce json
-// @Success 200 {array} model.Feed
+// @Success 200 {array} response.Feed
 // @Router /feeds [get]
 func (f *FeedController) GetFeeds(c echo.Context) error {
 	feeds, err := f.store.FindAll()
@@ -29,7 +31,12 @@ func (f *FeedController) GetFeeds(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusOK, feeds)
+	res := make([]response.Feed, 0, len(feeds))
+	for _, fd := range feeds {
+		res = append(res, *response.NewFeed(&fd))
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // CreateFeed godoc
@@ -38,11 +45,11 @@ func (f *FeedController) GetFeeds(c echo.Context) error {
 // @Tags feeds
 // @Accept json
 // @Produce json
-// @Param feed body model.CreateFeedRequest true "Feed data"
-// @Success 201 {object} model.Feed
+// @Param feed body request.Feed true "Feed data"
+// @Success 201 {object} response.Feed
 // @Router /feeds [post]
 func (f *FeedController) CreateFeed(c echo.Context) error {
-	feedRequest := new(model.CreateFeedRequest)
+	feedRequest := new(request.Feed)
 	if err := c.Bind(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -58,7 +65,9 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	return c.JSON(http.StatusCreated, fd)
+	res := response.NewFeed(&fd)
+
+	return c.JSON(http.StatusCreated, res)
 }
 
 // DeleteFeed godoc

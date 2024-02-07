@@ -1,13 +1,13 @@
 basePath: /api
 definitions:
-  model.CreateFeedRequest:
+  request.Feed:
     properties:
       url:
         type: string
     required:
     - url
     type: object
-  model.Feed:
+  response.Feed:
     properties:
       id:
         type: string
@@ -30,7 +30,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Feed'
+              $ref: '#/definitions/response.Feed'
             type: array
       summary: Get all feeds
       tags:
@@ -45,14 +45,14 @@ paths:
         name: feed
         required: true
         schema:
-          $ref: '#/definitions/model.CreateFeedRequest'
+          $ref: '#/definitions/request.Feed'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/model.Feed'
+            $ref: '#/definitions/response.Feed'
       summary: Create a new feed
       tags:
       - feeds
