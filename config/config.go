@@ -26,13 +26,15 @@ type Database struct {
 func New(file string) *Config {
 	cfgString, err := os.ReadFile(file)
 	if err != nil {
-		panic("config.toml not found")
+		println(fmt.Sprintf("Error: config file '%s' not found", file))
+		os.Exit(1)
 	}
 
 	var cfg Config
 	err = toml.Unmarshal(cfgString, &cfg)
 	if err != nil {
-		panic(fmt.Sprintf("error unmarshalling config.toml: %s", err))
+		println(fmt.Sprintf("Error: config file '%s' is not valid %s", file, err))
+		os.Exit(1)
 	}
 
 	return &cfg
