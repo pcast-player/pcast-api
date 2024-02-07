@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 	"net/http"
 	"pcast-api/feed"
 	"pcast-api/model"
@@ -31,10 +32,9 @@ func (f *FeedController) GetFeeds(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := make([]response.Feed, 0, len(feeds))
-	for _, fd := range feeds {
-		res = append(res, *response.NewFeed(&fd))
-	}
+	res := lo.Map(feeds, func(item model.Feed, index int) *response.Feed {
+		return response.NewFeed(&item)
+	})
 
 	return c.JSON(http.StatusOK, res)
 }
