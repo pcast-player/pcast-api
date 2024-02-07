@@ -1,4 +1,3 @@
 .idea
-pcast.db
-pcast-test.db
+*.db
 target/

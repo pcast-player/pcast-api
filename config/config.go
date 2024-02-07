@@ -23,8 +23,8 @@ type Database struct {
 	Logging bool
 }
 
-func New() *Config {
-	cfgString, err := os.ReadFile("config.toml")
+func New(file string) *Config {
+	cfgString, err := os.ReadFile(file)
 	if err != nil {
 		panic("config.toml not found")
 	}

@@ -1,4 +1,4 @@
-all: install build test
+all: install build fixtures
 
 install:
 	go mod download

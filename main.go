@@ -15,7 +15,7 @@ import (
 // @BasePath  /api
 // @host localhost:8080
 func main() {
-	c := config.New()
+	c := config.New("config.toml")
 	r := router.New(c)
 	apiV1 := r.Group("/api")
 	d := db.New(c)

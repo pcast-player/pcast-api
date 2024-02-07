@@ -1,0 +1,9 @@
+[server]
+host = "localhost"
+port = 3000
+logging = true
+log_level = "log_level"
+log_format = "log_format"
+
+[database]
+logging = false

@@ -39,7 +39,7 @@ func getLogger(c *config.Config) logger.Interface {
 }
 
 func NewTestDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("./../pcast-test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("./../fixtures/test/pcast.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

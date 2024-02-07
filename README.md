@@ -39,5 +39,5 @@ There is also an API documentation available at http://localhost:8080/swagger/.
 ### Testing
 
 ```bash
-go test ./...
+go fixtures ./...
 ```
