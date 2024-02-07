@@ -6,27 +6,36 @@ import (
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"pcast-api/config"
 	"pcast-api/model"
 	"time"
 )
 
-func New() *gorm.DB {
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
-			IgnoreRecordNotFoundError: true,
-			ParameterizedQueries:      true,
-		},
-	)
+func New(c *config.Config) *gorm.DB {
+	l := getLogger(c)
 
-	db, err := gorm.Open(sqlite.Open("./pcast.db"), &gorm.Config{Logger: newLogger})
+	db, err := gorm.Open(sqlite.Open("./pcast.db"), &gorm.Config{Logger: l})
 	if err != nil {
 		panic("Failed to connect to database!")
 	}
 
 	return db
+}
+
+func getLogger(c *config.Config) logger.Interface {
+	if c.Database.Logging {
+		return logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				SlowThreshold:             time.Second,
+				LogLevel:                  logger.Info,
+				IgnoreRecordNotFoundError: true,
+				ParameterizedQueries:      true,
+			},
+		)
+	} else {
+		return nil
+	}
 }
 
 func NewTestDB() *gorm.DB {

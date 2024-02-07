@@ -2,6 +2,7 @@ package main
 
 import (
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"pcast-api/config"
 	"pcast-api/controller"
 	"pcast-api/db"
 	_ "pcast-api/docs"
@@ -14,9 +15,10 @@ import (
 // @BasePath  /api
 // @host localhost:8080
 func main() {
-	r := router.New()
+	c := config.New()
+	r := router.New(c)
 	apiV1 := r.Group("/api")
-	d := db.New()
+	d := db.New(c)
 
 	db.AutoMigrate(d)
 
@@ -27,5 +29,5 @@ func main() {
 
 	feedController.Register(apiV1)
 
-	r.Logger.Fatal(r.Start(":8080"))
+	r.Logger.Fatal(r.Start(c.Server.GetAddress()))
 }
