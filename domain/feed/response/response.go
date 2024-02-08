@@ -15,7 +15,7 @@ type Feed struct {
 	SyncedAt *time.Time `json:"syncedAt"`
 }
 
-func NewFeed(feed *model.Feed) *Feed {
+func New(feed *model.Feed) *Feed {
 	return &Feed{
 		ID:       feed.ID,
 		Title:    feed.Title,
