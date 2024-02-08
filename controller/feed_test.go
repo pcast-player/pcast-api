@@ -49,6 +49,7 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	}
 
 	body := string(bytes)
+	println(fmt.Sprintf("Response: %s", body))
 	m := new(M)
 	err = json.Unmarshal([]byte(body), m)
 	if err != nil {
@@ -72,7 +73,7 @@ func TestCreateFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		JSON(`{"url": "https://example.com"}`).
+		JSON(`{"url": "https://example.com","title":"Example"}`).
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
@@ -100,6 +101,18 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 	db.TruncateTables(d)
 }
 
+func TestCreateFeedMissingPropertyError(t *testing.T) {
+	apitest.New().
+		Handler(newApp()).
+		Post("/api/feeds").
+		JSON(`{"url": "https://example.com"}`).
+		Expect(t).
+		Status(http.StatusBadRequest).
+		End()
+
+	db.TruncateTables(d)
+}
+
 func TestCreateFeedUrlValidationError(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
@@ -116,7 +129,7 @@ func TestDeleteFeed(t *testing.T) {
 	result := apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		JSON(`{"url": "https://example.com"}`).
+		JSON(`{"url": "https://example.com","title":"Example"}`).
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
@@ -145,4 +158,36 @@ func TestDeleteFeed(t *testing.T) {
 		Assert(jsonpath.Len("$", 0)).
 		Status(http.StatusOK).
 		End()
+
+	db.TruncateTables(d)
+}
+
+func TestUpdateFeed(t *testing.T) {
+	result := apitest.New().
+		Handler(newApp()).
+		Post("/api/feeds").
+		JSON(`{"url": "https://example.com","title":"Example"}`).
+		Expect(t).
+		Assert(jsonpath.Equal("$.syncedAt", nil)).
+		Status(http.StatusCreated).
+		End()
+
+	feed := unmarshal[model.Feed](t, &result)
+
+	apitest.New().
+		Handler(newApp()).
+		Put(fmt.Sprintf("/api/feeds/%s/sync", feed.ID)).
+		Expect(t).
+		Status(http.StatusNoContent).
+		End()
+
+	apitest.New().
+		Handler(newApp()).
+		Get("/api/feeds").
+		Expect(t).
+		Assert(jsonpath.NotEqual("$[0].syncedAt", nil)).
+		Status(http.StatusOK).
+		End()
+
+	db.TruncateTables(d)
 }

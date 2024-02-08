@@ -73,3 +73,22 @@ func TestDeleteFeed(t *testing.T) {
 
 	db.TruncateTables(d)
 }
+
+func TestUpdateFeed(t *testing.T) {
+	feedStore := New(d)
+
+	feed := &model.Feed{URL: "https://example.com"}
+	if err := feedStore.Create(feed); err != nil {
+		log.Fatal(err)
+	}
+
+	feed.URL = "https://example.com/updated"
+	err := feedStore.Update(feed)
+	assert.NoError(t, err)
+
+	foundFeed, err := feedStore.FindByID(feed.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, feed.URL, foundFeed.URL)
+
+	db.TruncateTables(d)
+}

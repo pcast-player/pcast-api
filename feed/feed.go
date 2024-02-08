@@ -10,4 +10,5 @@ type Store interface {
 	Create(feed *model.Feed) error
 	FindByID(id uuid.UUID) (*model.Feed, error)
 	Delete(feed *model.Feed) error
+	Update(feed *model.Feed) error
 }

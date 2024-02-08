@@ -10,7 +10,9 @@ type Feed struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Title     string
 	URL       string
+	SyncedAt  *time.Time
 }
 
 func (feed *Feed) BeforeCreate(_ *gorm.DB) (err error) {

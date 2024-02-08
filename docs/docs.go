@@ -92,15 +92,42 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/feeds/{id}/sync": {
+            "put": {
+                "description": "Sync a feed with the given ID",
+                "tags": [
+                    "feeds"
+                ],
+                "summary": "Sync a feed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Feed ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Feed synced successfully"
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "request.Feed": {
             "type": "object",
             "required": [
+                "title",
                 "url"
             ],
             "properties": {
+                "title": {
+                    "type": "string"
+                },
                 "url": {
                     "type": "string"
                 }
@@ -110,6 +137,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
+                    "type": "string"
+                },
+                "syncedAt": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 },
                 "url": {

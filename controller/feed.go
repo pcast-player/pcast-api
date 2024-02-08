@@ -9,6 +9,7 @@ import (
 	"pcast-api/model"
 	"pcast-api/request"
 	"pcast-api/response"
+	"time"
 )
 
 type FeedController struct {
@@ -57,7 +58,7 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	fd := model.Feed{URL: feedRequest.URL}
+	fd := model.Feed{URL: feedRequest.URL, Title: feedRequest.Title, SyncedAt: nil}
 
 	err := f.store.Create(&fd)
 	if err != nil {
@@ -94,8 +95,38 @@ func (f *FeedController) DeleteFeed(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// SyncFeed godoc
+// @Summary Sync a feed
+// @Description Sync a feed with the given ID
+// @Tags feeds
+// @Param id path string true "Feed ID"
+// @Success 204 "Feed synced successfully"
+// @Router /feeds/{id}/sync [put]
+func (f *FeedController) SyncFeed(c echo.Context) error {
+	UUID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	fd, err := f.store.FindByID(UUID)
+	if err != nil {
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	now := time.Now()
+	fd.SyncedAt = &now
+
+	err = f.store.Update(fd)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func (f *FeedController) Register(g *echo.Group) {
 	g.GET("/feeds", f.GetFeeds)
 	g.POST("/feeds", f.CreateFeed)
+	g.PUT("/feeds/:id/sync", f.SyncFeed)
 	g.DELETE("/feeds/:id", f.DeleteFeed)
 }

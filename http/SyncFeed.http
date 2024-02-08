@@ -1,0 +1,1 @@
+PUT http://localhost:8080/api/feeds/018d8ab6-f2d5-71dc-b679-e4aff994dedf/sync

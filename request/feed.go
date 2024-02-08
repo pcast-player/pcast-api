@@ -3,5 +3,6 @@ package request
 // Feed represents a feed request
 // @model Feed
 type Feed struct {
-	URL string `json:"url" validate:"required,url"`
+	Title string `json:"title" validate:"required"`
+	URL   string `json:"url" validate:"required,url"`
 }

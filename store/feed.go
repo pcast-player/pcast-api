@@ -39,3 +39,7 @@ func (s *FeedStore) FindByID(id uuid.UUID) (*model.Feed, error) {
 func (s *FeedStore) Delete(feed *model.Feed) error {
 	return s.db.Delete(feed).Error
 }
+
+func (s *FeedStore) Update(feed *model.Feed) error {
+	return s.db.Save(feed).Error
+}

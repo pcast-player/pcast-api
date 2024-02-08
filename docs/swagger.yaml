@@ -2,14 +2,21 @@ basePath: /api
 definitions:
   request.Feed:
     properties:
+      title:
+        type: string
       url:
         type: string
     required:
+    - title
     - url
     type: object
   response.Feed:
     properties:
       id:
+        type: string
+      syncedAt:
+        type: string
+      title:
         type: string
       url:
         type: string
@@ -69,6 +76,21 @@ paths:
         "200":
           description: Feed deleted successfully
       summary: Delete a feed
+      tags:
+      - feeds
+  /feeds/{id}/sync:
+    put:
+      description: Sync a feed with the given ID
+      parameters:
+      - description: Feed ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Feed synced successfully
+      summary: Sync a feed
       tags:
       - feeds
 swagger: "2.0"
