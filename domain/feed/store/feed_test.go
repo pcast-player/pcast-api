@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"pcast-api/db"
-	"pcast-api/model"
+	"pcast-api/domain/feed/model"
 	"testing"
 )
 

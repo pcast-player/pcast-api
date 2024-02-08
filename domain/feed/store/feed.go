@@ -3,18 +3,18 @@ package store
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"pcast-api/model"
+	"pcast-api/domain/feed/model"
 )
 
-type FeedStore struct {
+type Store struct {
 	db *gorm.DB
 }
 
-func New(db *gorm.DB) *FeedStore {
-	return &FeedStore{db: db}
+func New(db *gorm.DB) *Store {
+	return &Store{db: db}
 }
 
-func (s *FeedStore) FindAll() ([]model.Feed, error) {
+func (s *Store) FindAll() ([]model.Feed, error) {
 	var feeds []model.Feed
 	if err := s.db.Find(&feeds).Error; err != nil {
 		return nil, err
@@ -23,11 +23,11 @@ func (s *FeedStore) FindAll() ([]model.Feed, error) {
 	return feeds, nil
 }
 
-func (s *FeedStore) Create(feed *model.Feed) error {
+func (s *Store) Create(feed *model.Feed) error {
 	return s.db.Create(feed).Error
 }
 
-func (s *FeedStore) FindByID(id uuid.UUID) (*model.Feed, error) {
+func (s *Store) FindByID(id uuid.UUID) (*model.Feed, error) {
 	var feed model.Feed
 	if err := s.db.First(&feed, id).Error; err != nil {
 		return nil, err
@@ -36,10 +36,10 @@ func (s *FeedStore) FindByID(id uuid.UUID) (*model.Feed, error) {
 	return &feed, nil
 }
 
-func (s *FeedStore) Delete(feed *model.Feed) error {
+func (s *Store) Delete(feed *model.Feed) error {
 	return s.db.Delete(feed).Error
 }
 
-func (s *FeedStore) Update(feed *model.Feed) error {
+func (s *Store) Update(feed *model.Feed) error {
 	return s.db.Save(feed).Error
 }

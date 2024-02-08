@@ -5,18 +5,18 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
-	"pcast-api/feed"
-	"pcast-api/model"
-	"pcast-api/request"
-	"pcast-api/response"
+	"pcast-api/domain/feed/model"
+	"pcast-api/domain/feed/request"
+	"pcast-api/domain/feed/response"
+	"pcast-api/domain/feed/store"
 	"time"
 )
 
 type FeedController struct {
-	store feed.Store
+	store store.Interface
 }
 
-func New(store feed.Store) *FeedController {
+func New(store store.Interface) *FeedController {
 	return &FeedController{store: store}
 }
 

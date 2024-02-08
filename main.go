@@ -5,11 +5,11 @@ import (
 	"fmt"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"pcast-api/config"
-	"pcast-api/controller"
 	"pcast-api/db"
 	_ "pcast-api/docs"
+	"pcast-api/domain/feed/controller"
+	"pcast-api/domain/feed/store"
 	"pcast-api/router"
-	"pcast-api/store"
 )
 
 const usage = `Usage:

@@ -2,7 +2,7 @@ package response
 
 import (
 	"github.com/google/uuid"
-	"pcast-api/model"
+	"pcast-api/domain/feed/model"
 	"time"
 )
 

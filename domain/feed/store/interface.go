@@ -1,11 +1,11 @@
-package feed
+package store
 
 import (
 	"github.com/google/uuid"
-	"pcast-api/model"
+	"pcast-api/domain/feed/model"
 )
 
-type Store interface {
+type Interface interface {
 	FindAll() ([]model.Feed, error)
 	Create(feed *model.Feed) error
 	FindByID(id uuid.UUID) (*model.Feed, error)

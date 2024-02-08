@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"os"
 	"pcast-api/db"
-	"pcast-api/model"
+	"pcast-api/domain/feed/model"
+	"pcast-api/domain/feed/store"
 	"pcast-api/router"
-	"pcast-api/store"
 	"testing"
 
 	"github.com/steinfletcher/apitest"
@@ -35,8 +35,8 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiV1 := r.Group("/api")
 
-	feedStore := store.New(d)
-	feedController := New(feedStore)
+	fs := store.New(d)
+	feedController := New(fs)
 	feedController.Register(apiV1)
 
 	return r
