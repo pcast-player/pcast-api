@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	echoSwagger "github.com/swaggo/echo-swagger"
+	"github.com/swaggo/echo-swagger"
 	"pcast-api/config"
 	"pcast-api/db"
 	_ "pcast-api/docs"
