@@ -47,13 +47,6 @@ func NewTestDB(dsn string) *gorm.DB {
 	return db
 }
 
-func AutoMigrate(db *gorm.DB) {
-	err := db.AutoMigrate(&model.Feed{})
-	if err != nil {
-		panic("Failed to migrate database!")
-	}
-}
-
 func TruncateTables(db *gorm.DB) {
 	err := db.Exec("DELETE FROM feeds;").Error
 	if err != nil {

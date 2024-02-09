@@ -32,8 +32,6 @@ func main() {
 	apiV1 := r.Group("/api")
 	d := db.New(c)
 
-	db.AutoMigrate(d)
-
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	feed.New(c, apiV1, d)

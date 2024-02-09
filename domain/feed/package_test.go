@@ -22,7 +22,6 @@ var d *gorm.DB
 
 func TestMain(m *testing.M) {
 	d = db.NewTestDB("./../../fixtures/test/pcast.db")
-	db.AutoMigrate(d)
 
 	code := m.Run()
 
