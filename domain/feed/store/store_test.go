@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB()
+	d = db.NewTestDB("./../../../fixtures/test/pcast.db")
 	err := d.AutoMigrate(&model.Feed{})
 	if err != nil {
 		log.Fatal(err)

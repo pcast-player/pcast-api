@@ -7,8 +7,7 @@ import (
 	"pcast-api/config"
 	"pcast-api/db"
 	_ "pcast-api/docs"
-	feedController "pcast-api/domain/feed/controller"
-	feedStore "pcast-api/domain/feed/store"
+	"pcast-api/domain/feed"
 	"pcast-api/router"
 )
 
@@ -37,10 +36,7 @@ func main() {
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	fs := feedStore.New(d)
-	fc := feedController.New(fs)
-
-	fc.Register(apiV1)
+	feed.New(c, apiV1, d)
 
 	r.Logger.Fatal(r.Start(c.Server.GetAddress()))
 }

@@ -1,4 +1,4 @@
-package controller
+package feed
 
 import (
 	"encoding/json"
@@ -9,9 +9,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"pcast-api/config"
 	"pcast-api/db"
 	"pcast-api/domain/feed/model"
-	"pcast-api/domain/feed/store"
 	"pcast-api/router"
 	"testing"
 
@@ -21,7 +21,7 @@ import (
 var d *gorm.DB
 
 func TestMain(m *testing.M) {
-	d = db.NewTestDB()
+	d = db.NewTestDB("./../../fixtures/test/pcast.db")
 	db.AutoMigrate(d)
 
 	code := m.Run()
@@ -32,12 +32,11 @@ func TestMain(m *testing.M) {
 }
 
 func newApp() *echo.Echo {
+	c := config.New("./../../fixtures/test/config.toml")
 	r := router.NewTestRouter()
 	apiV1 := r.Group("/api")
 
-	fs := store.New(d)
-	feedController := New(fs)
-	feedController.Register(apiV1)
+	New(c, apiV1, d)
 
 	return r
 }
@@ -134,7 +133,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	feed := unmarshal[model.Feed](t, &result)
+	fd := unmarshal[model.Feed](t, &result)
 
 	apitest.New().
 		Handler(newApp()).
@@ -146,7 +145,7 @@ func TestDeleteFeed(t *testing.T) {
 
 	apitest.New().
 		Handler(newApp()).
-		Delete(fmt.Sprintf("/api/feeds/%s", feed.ID)).
+		Delete(fmt.Sprintf("/api/feeds/%s", fd.ID)).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -172,11 +171,11 @@ func TestUpdateFeed(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	feed := unmarshal[model.Feed](t, &result)
+	fd := unmarshal[model.Feed](t, &result)
 
 	apitest.New().
 		Handler(newApp()).
-		Put(fmt.Sprintf("/api/feeds/%s/sync", feed.ID)).
+		Put(fmt.Sprintf("/api/feeds/%s/sync", fd.ID)).
 		Expect(t).
 		Status(http.StatusNoContent).
 		End()
