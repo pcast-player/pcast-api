@@ -7,6 +7,7 @@ import (
 	"os"
 	"pcast-api/db"
 	"pcast-api/domain/feed/model"
+	"pcast-api/test"
 	"testing"
 )
 
@@ -31,7 +32,7 @@ func setup() {
 }
 
 func tearDown() {
-	db.RemoveTables(d)
+	test.RemoveTables(d)
 }
 
 func TestCreateFeed(t *testing.T) {
@@ -41,7 +42,7 @@ func TestCreateFeed(t *testing.T) {
 	err := feedStore.Create(feed)
 	assert.NoError(t, err)
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestFindFeedByID(t *testing.T) {
@@ -57,7 +58,7 @@ func TestFindFeedByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestDeleteFeed(t *testing.T) {
@@ -71,7 +72,7 @@ func TestDeleteFeed(t *testing.T) {
 	err := feedStore.Delete(feed)
 	assert.NoError(t, err)
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestUpdateFeed(t *testing.T) {
@@ -90,5 +91,5 @@ func TestUpdateFeed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }

@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"pcast-api/config"
-	"pcast-api/domain/feed/model"
 	"time"
 )
 
@@ -45,18 +44,4 @@ func NewTestDB(dsn string) *gorm.DB {
 	}
 
 	return db
-}
-
-func TruncateTables(db *gorm.DB) {
-	err := db.Exec("DELETE FROM feeds;").Error
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func RemoveTables(db *gorm.DB) {
-	err := db.Migrator().DropTable(&model.Feed{})
-	if err != nil {
-		log.Fatal(err)
-	}
 }

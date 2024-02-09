@@ -13,6 +13,7 @@ import (
 	"pcast-api/db"
 	"pcast-api/domain/feed/model"
 	"pcast-api/router"
+	"pcast-api/test"
 	"testing"
 
 	"github.com/steinfletcher/apitest"
@@ -25,7 +26,7 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	db.RemoveTables(d)
+	test.RemoveTables(d)
 
 	os.Exit(code)
 }
@@ -84,7 +85,7 @@ func TestCreateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestCreateFeedPropertyNameError(t *testing.T) {
@@ -96,7 +97,7 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestCreateFeedMissingPropertyError(t *testing.T) {
@@ -108,7 +109,7 @@ func TestCreateFeedMissingPropertyError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestCreateFeedUrlValidationError(t *testing.T) {
@@ -120,7 +121,7 @@ func TestCreateFeedUrlValidationError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestDeleteFeed(t *testing.T) {
@@ -157,7 +158,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
 
 func TestUpdateFeed(t *testing.T) {
@@ -187,5 +188,5 @@ func TestUpdateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	db.TruncateTables(d)
+	test.TruncateTables(d)
 }
