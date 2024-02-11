@@ -9,6 +9,7 @@ import (
 	_ "pcast-api/docs"
 	"pcast-api/domain/feed"
 	"pcast-api/router"
+	feedStore "pcast-api/store/feed"
 )
 
 const usage = `Usage:
@@ -29,12 +30,13 @@ func main() {
 
 	c := config.New(cfgFile)
 	r := router.New(c)
-	apiV1 := r.Group("/api")
+	apiGroup := r.Group("/api")
 	d := db.New(c)
+	fs := feedStore.New(d)
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	feed.New(c, apiV1, d)
+	feed.New(apiGroup, fs)
 
 	r.Logger.Fatal(r.Start(c.Server.GetAddress()))
 }

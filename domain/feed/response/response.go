@@ -2,7 +2,7 @@ package response
 
 import (
 	"github.com/google/uuid"
-	"pcast-api/domain/feed/model"
+	"pcast-api/store/feed"
 	"time"
 )
 
@@ -15,7 +15,7 @@ type Feed struct {
 	SyncedAt *time.Time `json:"syncedAt"`
 }
 
-func New(feed *model.Feed) *Feed {
+func New(feed *feed.Feed) *Feed {
 	return &Feed{
 		ID:       feed.ID,
 		Title:    feed.Title,

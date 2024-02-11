@@ -5,18 +5,17 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
-	"pcast-api/domain/feed/model"
 	"pcast-api/domain/feed/request"
 	"pcast-api/domain/feed/response"
-	"pcast-api/domain/feed/store"
+	"pcast-api/store/feed"
 	"time"
 )
 
 type Controller struct {
-	store store.Interface
+	store feed.Interface
 }
 
-func New(store store.Interface) *Controller {
+func New(store feed.Interface) *Controller {
 	return &Controller{store: store}
 }
 
@@ -33,7 +32,7 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := lo.Map(feeds, func(item model.Feed, index int) *response.Feed {
+	res := lo.Map(feeds, func(item feed.Feed, index int) *response.Feed {
 		return response.New(&item)
 	})
 
@@ -58,7 +57,7 @@ func (f *Controller) CreateFeed(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	fd := model.Feed{URL: feedRequest.URL, Title: feedRequest.Title, SyncedAt: nil}
+	fd := feed.Feed{URL: feedRequest.URL, Title: feedRequest.Title, SyncedAt: nil}
 
 	err := f.store.Create(&fd)
 	if err != nil {
