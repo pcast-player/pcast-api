@@ -9,6 +9,7 @@ import (
 	_ "pcast-api/docs"
 	"pcast-api/domain/feed"
 	"pcast-api/router"
+	episodeStore "pcast-api/store/episode"
 	feedStore "pcast-api/store/feed"
 )
 
@@ -33,6 +34,7 @@ func main() {
 	apiGroup := r.Group("/api")
 	d := db.New(c)
 	fs := feedStore.New(d)
+	_ = episodeStore.New(d)
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
