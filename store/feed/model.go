@@ -15,8 +15,8 @@ type Feed struct {
 	SyncedAt  *time.Time
 }
 
-func (feed *Feed) BeforeCreate(_ *gorm.DB) (err error) {
-	feed.ID, err = uuid.NewV7()
+func (f *Feed) BeforeCreate(_ *gorm.DB) (err error) {
+	f.ID, err = uuid.NewV7()
 	if err != nil {
 		return err
 	}
