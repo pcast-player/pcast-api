@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"pcast-api/config"
-	"pcast-api/model"
 	"time"
 )
 
@@ -38,32 +37,11 @@ func getLogger(c *config.Config) logger.Interface {
 	}
 }
 
-func NewTestDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("./../fixtures/test/pcast.db"), &gorm.Config{})
+func NewTestDB(dsn string) *gorm.DB {
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 
 	return db
-}
-
-func AutoMigrate(db *gorm.DB) {
-	err := db.AutoMigrate(&model.Feed{})
-	if err != nil {
-		panic("Failed to migrate database!")
-	}
-}
-
-func TruncateTables(db *gorm.DB) {
-	err := db.Exec("DELETE FROM feeds;").Error
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func RemoveTables(db *gorm.DB) {
-	err := db.Migrator().DropTable(&model.Feed{})
-	if err != nil {
-		log.Fatal(err)
-	}
 }

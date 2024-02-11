@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	echoSwagger "github.com/swaggo/echo-swagger"
+	"github.com/swaggo/echo-swagger"
 	"pcast-api/config"
-	"pcast-api/controller"
 	"pcast-api/db"
 	_ "pcast-api/docs"
+	"pcast-api/domain/feed"
 	"pcast-api/router"
-	"pcast-api/store"
+	feedStore "pcast-api/store/feed"
 )
 
 const usage = `Usage:
@@ -30,17 +30,13 @@ func main() {
 
 	c := config.New(cfgFile)
 	r := router.New(c)
-	apiV1 := r.Group("/api")
+	apiGroup := r.Group("/api")
 	d := db.New(c)
-
-	db.AutoMigrate(d)
+	fs := feedStore.New(d)
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	feedStore := store.New(d)
-	feedController := controller.New(feedStore)
-
-	feedController.Register(apiV1)
+	feed.New(apiGroup, fs)
 
 	r.Logger.Fatal(r.Start(c.Server.GetAddress()))
 }

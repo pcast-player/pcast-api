@@ -5,19 +5,18 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
-	"pcast-api/feed"
-	"pcast-api/model"
-	"pcast-api/request"
-	"pcast-api/response"
+	"pcast-api/domain/feed/request"
+	"pcast-api/domain/feed/response"
+	"pcast-api/store/feed"
 	"time"
 )
 
-type FeedController struct {
-	store feed.Store
+type Controller struct {
+	store feed.Interface
 }
 
-func New(store feed.Store) *FeedController {
-	return &FeedController{store: store}
+func New(store feed.Interface) *Controller {
+	return &Controller{store: store}
 }
 
 // GetFeeds godoc
@@ -27,14 +26,14 @@ func New(store feed.Store) *FeedController {
 // @Produce json
 // @Success 200 {array} response.Feed
 // @Router /feeds [get]
-func (f *FeedController) GetFeeds(c echo.Context) error {
+func (f *Controller) GetFeeds(c echo.Context) error {
 	feeds, err := f.store.FindAll()
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := lo.Map(feeds, func(item model.Feed, index int) *response.Feed {
-		return response.NewFeed(&item)
+	res := lo.Map(feeds, func(item feed.Feed, index int) *response.Feed {
+		return response.New(&item)
 	})
 
 	return c.JSON(http.StatusOK, res)
@@ -49,7 +48,7 @@ func (f *FeedController) GetFeeds(c echo.Context) error {
 // @Param feed body request.Feed true "Feed data"
 // @Success 201 {object} response.Feed
 // @Router /feeds [post]
-func (f *FeedController) CreateFeed(c echo.Context) error {
+func (f *Controller) CreateFeed(c echo.Context) error {
 	feedRequest := new(request.Feed)
 	if err := c.Bind(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -58,7 +57,7 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	fd := model.Feed{URL: feedRequest.URL, Title: feedRequest.Title, SyncedAt: nil}
+	fd := feed.Feed{URL: feedRequest.URL, Title: feedRequest.Title, SyncedAt: nil}
 
 	err := f.store.Create(&fd)
 	if err != nil {
@@ -66,7 +65,7 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	res := response.NewFeed(&fd)
+	res := response.New(&fd)
 
 	return c.JSON(http.StatusCreated, res)
 }
@@ -78,7 +77,7 @@ func (f *FeedController) CreateFeed(c echo.Context) error {
 // @Param id path string true "Feed ID"
 // @Success 200 "Feed deleted successfully"
 // @Router /feeds/{id} [delete]
-func (f *FeedController) DeleteFeed(c echo.Context) error {
+func (f *Controller) DeleteFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
@@ -102,7 +101,7 @@ func (f *FeedController) DeleteFeed(c echo.Context) error {
 // @Param id path string true "Feed ID"
 // @Success 204 "Feed synced successfully"
 // @Router /feeds/{id}/sync [put]
-func (f *FeedController) SyncFeed(c echo.Context) error {
+func (f *Controller) SyncFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
@@ -124,7 +123,7 @@ func (f *FeedController) SyncFeed(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (f *FeedController) Register(g *echo.Group) {
+func (f *Controller) Register(g *echo.Group) {
 	g.GET("/feeds", f.GetFeeds)
 	g.POST("/feeds", f.CreateFeed)
 	g.PUT("/feeds/:id/sync", f.SyncFeed)
