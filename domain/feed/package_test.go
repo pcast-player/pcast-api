@@ -47,7 +47,6 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	}
 
 	body := string(bytes)
-	println(fmt.Sprintf("Response: %s", body))
 	m := new(M)
 	err = json.Unmarshal([]byte(body), m)
 	if err != nil {
