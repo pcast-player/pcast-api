@@ -1,12 +1,10 @@
-package controller
+package feed
 
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
-	"pcast-api/domain/feed/presenter"
-	"pcast-api/domain/feed/request"
 	"pcast-api/store/feed"
 	"time"
 )
@@ -15,7 +13,7 @@ type Controller struct {
 	store feed.Interface
 }
 
-func New(store feed.Interface) *Controller {
+func NewController(store feed.Interface) *Controller {
 	return &Controller{store: store}
 }
 
@@ -24,7 +22,7 @@ func New(store feed.Interface) *Controller {
 // @Description Retrieve all feeds from the store
 // @Tags feeds
 // @Produce json
-// @Success 200 {array} presenter.Feed
+// @Success 200 {array} Presenter
 // @Router /feeds [get]
 func (f *Controller) GetFeeds(c echo.Context) error {
 	feeds, err := f.store.FindAll()
@@ -32,8 +30,8 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := lo.Map(feeds, func(item feed.Feed, index int) *presenter.Feed {
-		return presenter.New(&item)
+	res := lo.Map(feeds, func(item feed.Feed, index int) *Presenter {
+		return NewPresenter(&item)
 	})
 
 	return c.JSON(http.StatusOK, res)
@@ -45,11 +43,11 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 // @Tags feeds
 // @Accept json
 // @Produce json
-// @Param feed body request.CreateFeedRequest true "CreateFeedRequest data"
-// @Success 201 {object} presenter.Feed
+// @Param feed body CreateRequest true "CreateRequest data"
+// @Success 201 {object} Presenter
 // @Router /feeds [post]
 func (f *Controller) CreateFeed(c echo.Context) error {
-	feedRequest := new(request.CreateFeedRequest)
+	feedRequest := new(CreateRequest)
 	if err := c.Bind(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -65,17 +63,17 @@ func (f *Controller) CreateFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	res := presenter.New(&fd)
+	res := NewPresenter(&fd)
 
 	return c.JSON(http.StatusCreated, res)
 }
 
 // DeleteFeed godoc
 // @Summary Delete a feed
-// @Description Delete a feed with the given ID
+// @Description Delete a feed with the given feed ID
 // @Tags feeds
-// @Param id path string true "CreateFeedRequest ID"
-// @Success 200 "CreateFeedRequest deleted successfully"
+// @Param id path string true "ID"
+// @Success 200 "Feed deleted successfully"
 // @Router /feeds/{id} [delete]
 func (f *Controller) DeleteFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
@@ -96,10 +94,10 @@ func (f *Controller) DeleteFeed(c echo.Context) error {
 
 // SyncFeed godoc
 // @Summary Sync a feed
-// @Description Sync a feed with the given ID
+// @Description Sync a feed with the given feed ID
 // @Tags feeds
-// @Param id path string true "CreateFeedRequest ID"
-// @Success 204 "CreateFeedRequest synced successfully"
+// @Param id path string true "Feed ID"
+// @Success 204 "Feed synced successfully"
 // @Router /feeds/{id}/sync [put]
 func (f *Controller) SyncFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))

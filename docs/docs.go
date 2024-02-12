@@ -31,7 +31,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/presenter.Feed"
+                                "$ref": "#/definitions/feed.Presenter"
                             }
                         }
                     }
@@ -51,12 +51,12 @@ const docTemplate = `{
                 "summary": "Create a new feed",
                 "parameters": [
                     {
-                        "description": "CreateFeedRequest data",
+                        "description": "CreateRequest data",
                         "name": "feed",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.CreateFeedRequest"
+                            "$ref": "#/definitions/feed.CreateRequest"
                         }
                     }
                 ],
@@ -64,7 +64,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/presenter.Feed"
+                            "$ref": "#/definitions/feed.Presenter"
                         }
                     }
                 }
@@ -72,7 +72,7 @@ const docTemplate = `{
         },
         "/feeds/{id}": {
             "delete": {
-                "description": "Delete a feed with the given ID",
+                "description": "Delete a feed with the given feed ID",
                 "tags": [
                     "feeds"
                 ],
@@ -80,7 +80,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "CreateFeedRequest ID",
+                        "description": "ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -88,14 +88,14 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "CreateFeedRequest deleted successfully"
+                        "description": "Feed deleted successfully"
                     }
                 }
             }
         },
         "/feeds/{id}/sync": {
             "put": {
-                "description": "Sync a feed with the given ID",
+                "description": "Sync a feed with the given feed ID",
                 "tags": [
                     "feeds"
                 ],
@@ -103,7 +103,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "CreateFeedRequest ID",
+                        "description": "Feed ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -111,22 +111,20 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "CreateFeedRequest synced successfully"
+                        "description": "Feed synced successfully"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "presenter.Feed": {
+        "feed.CreateRequest": {
             "type": "object",
+            "required": [
+                "title",
+                "url"
+            ],
             "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "syncedAt": {
-                    "type": "string"
-                },
                 "title": {
                     "type": "string"
                 },
@@ -135,13 +133,15 @@ const docTemplate = `{
                 }
             }
         },
-        "request.CreateFeedRequest": {
+        "feed.Presenter": {
             "type": "object",
-            "required": [
-                "title",
-                "url"
-            ],
             "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "syncedAt": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },

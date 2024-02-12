@@ -1,4 +1,4 @@
-package presenter
+package feed
 
 import (
 	"github.com/google/uuid"
@@ -6,17 +6,17 @@ import (
 	"time"
 )
 
-// Feed represents a feed presenter
-// @model Feed
-type Feed struct {
+// Presenter represents a feed presenter
+// @model Presenter
+type Presenter struct {
 	ID       uuid.UUID  `json:"id"`
 	Title    string     `json:"title"`
 	URL      string     `json:"url"`
 	SyncedAt *time.Time `json:"syncedAt"`
 }
 
-func New(feed *feed.Feed) *Feed {
-	return &Feed{
+func NewPresenter(feed *feed.Feed) *Presenter {
+	return &Presenter{
 		ID:       feed.ID,
 		Title:    feed.Title,
 		URL:      feed.URL,

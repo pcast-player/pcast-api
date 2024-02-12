@@ -1,6 +1,16 @@
 basePath: /api
 definitions:
-  presenter.Feed:
+  feed.CreateRequest:
+    properties:
+      title:
+        type: string
+      url:
+        type: string
+    required:
+    - title
+    - url
+    type: object
+  feed.Presenter:
     properties:
       id:
         type: string
@@ -10,16 +20,6 @@ definitions:
         type: string
       url:
         type: string
-    type: object
-  request.CreateFeedRequest:
-    properties:
-      title:
-        type: string
-      url:
-        type: string
-    required:
-    - title
-    - url
     type: object
 host: localhost:8080
 info:
@@ -37,7 +37,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/presenter.Feed'
+              $ref: '#/definitions/feed.Presenter'
             type: array
       summary: Get all feeds
       tags:
@@ -47,49 +47,49 @@ paths:
       - application/json
       description: Create a new feed with the data provided in the request
       parameters:
-      - description: CreateFeedRequest data
+      - description: CreateRequest data
         in: body
         name: feed
         required: true
         schema:
-          $ref: '#/definitions/request.CreateFeedRequest'
+          $ref: '#/definitions/feed.CreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/presenter.Feed'
+            $ref: '#/definitions/feed.Presenter'
       summary: Create a new feed
       tags:
       - feeds
   /feeds/{id}:
     delete:
-      description: Delete a feed with the given ID
+      description: Delete a feed with the given feed ID
       parameters:
-      - description: CreateFeedRequest ID
+      - description: ID
         in: path
         name: id
         required: true
         type: string
       responses:
         "200":
-          description: CreateFeedRequest deleted successfully
+          description: Feed deleted successfully
       summary: Delete a feed
       tags:
       - feeds
   /feeds/{id}/sync:
     put:
-      description: Sync a feed with the given ID
+      description: Sync a feed with the given feed ID
       parameters:
-      - description: CreateFeedRequest ID
+      - description: Feed ID
         in: path
         name: id
         required: true
         type: string
       responses:
         "204":
-          description: CreateFeedRequest synced successfully
+          description: Feed synced successfully
       summary: Sync a feed
       tags:
       - feeds
