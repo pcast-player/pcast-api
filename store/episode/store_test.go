@@ -1,11 +1,14 @@
 package episode
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+	"math/rand"
 	"os"
 	"pcast-api/db"
+	"strconv"
 	"testing"
 )
 
@@ -33,7 +36,9 @@ func tearDown() {
 
 func newEpisode() *Episode {
 	id, _ := uuid.NewV7()
-	return &Episode{FeedId: id}
+	guid := strconv.Itoa(rand.Intn(9999999999))
+
+	return &Episode{FeedId: id, FeedGUID: fmt.Sprintf("tag:soundcloud,2010:tracks/%s", guid)}
 }
 
 func TestCreateEpisode(t *testing.T) {

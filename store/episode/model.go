@@ -11,6 +11,7 @@ type Episode struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	FeedId          uuid.UUID `gorm:"type:uuid"`
+	FeedGUID        string
 	CurrentPosition *int
 	Played          bool
 }
