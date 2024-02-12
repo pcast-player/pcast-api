@@ -31,7 +31,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Feed"
+                                "$ref": "#/definitions/presenter.Feed"
                             }
                         }
                     }
@@ -64,7 +64,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/response.Feed"
+                            "$ref": "#/definitions/presenter.Feed"
                         }
                     }
                 }
@@ -118,22 +118,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "request.Feed": {
-            "type": "object",
-            "required": [
-                "title",
-                "url"
-            ],
-            "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.Feed": {
+        "presenter.Feed": {
             "type": "object",
             "properties": {
                 "id": {
@@ -142,6 +127,21 @@ const docTemplate = `{
                 "syncedAt": {
                     "type": "string"
                 },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.Feed": {
+            "type": "object",
+            "required": [
+                "title",
+                "url"
+            ],
+            "properties": {
                 "title": {
                     "type": "string"
                 },

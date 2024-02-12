@@ -1,16 +1,6 @@
 basePath: /api
 definitions:
-  request.Feed:
-    properties:
-      title:
-        type: string
-      url:
-        type: string
-    required:
-    - title
-    - url
-    type: object
-  response.Feed:
+  presenter.Feed:
     properties:
       id:
         type: string
@@ -20,6 +10,16 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  request.Feed:
+    properties:
+      title:
+        type: string
+      url:
+        type: string
+    required:
+    - title
+    - url
     type: object
 host: localhost:8080
 info:
@@ -37,7 +37,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Feed'
+              $ref: '#/definitions/presenter.Feed'
             type: array
       summary: Get all feeds
       tags:
@@ -59,7 +59,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/response.Feed'
+            $ref: '#/definitions/presenter.Feed'
       summary: Create a new feed
       tags:
       - feeds

@@ -5,8 +5,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
+	"pcast-api/domain/feed/presenter"
 	"pcast-api/domain/feed/request"
-	"pcast-api/domain/feed/response"
 	"pcast-api/store/feed"
 	"time"
 )
@@ -24,7 +24,7 @@ func New(store feed.Interface) *Controller {
 // @Description Retrieve all feeds from the store
 // @Tags feeds
 // @Produce json
-// @Success 200 {array} response.Feed
+// @Success 200 {array} presenter.Feed
 // @Router /feeds [get]
 func (f *Controller) GetFeeds(c echo.Context) error {
 	feeds, err := f.store.FindAll()
@@ -32,8 +32,8 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := lo.Map(feeds, func(item feed.Feed, index int) *response.Feed {
-		return response.New(&item)
+	res := lo.Map(feeds, func(item feed.Feed, index int) *presenter.Feed {
+		return presenter.New(&item)
 	})
 
 	return c.JSON(http.StatusOK, res)
@@ -46,7 +46,7 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param feed body request.Feed true "Feed data"
-// @Success 201 {object} response.Feed
+// @Success 201 {object} presenter.Feed
 // @Router /feeds [post]
 func (f *Controller) CreateFeed(c echo.Context) error {
 	feedRequest := new(request.Feed)
@@ -65,7 +65,7 @@ func (f *Controller) CreateFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	res := response.New(&fd)
+	res := presenter.New(&fd)
 
 	return c.JSON(http.StatusCreated, res)
 }

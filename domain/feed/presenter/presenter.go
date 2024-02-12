@@ -1,4 +1,4 @@
-package response
+package presenter
 
 import (
 	"github.com/google/uuid"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Feed represents a feed response
+// Feed represents a feed presenter
 // @model Feed
 type Feed struct {
 	ID       uuid.UUID  `json:"id"`
