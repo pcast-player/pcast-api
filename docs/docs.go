@@ -51,12 +51,12 @@ const docTemplate = `{
                 "summary": "Create a new feed",
                 "parameters": [
                     {
-                        "description": "Feed data",
+                        "description": "CreateFeedRequest data",
                         "name": "feed",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.Feed"
+                            "$ref": "#/definitions/request.CreateFeedRequest"
                         }
                     }
                 ],
@@ -80,7 +80,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Feed ID",
+                        "description": "CreateFeedRequest ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -88,7 +88,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Feed deleted successfully"
+                        "description": "CreateFeedRequest deleted successfully"
                     }
                 }
             }
@@ -103,7 +103,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Feed ID",
+                        "description": "CreateFeedRequest ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -111,7 +111,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Feed synced successfully"
+                        "description": "CreateFeedRequest synced successfully"
                     }
                 }
             }
@@ -135,7 +135,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.Feed": {
+        "request.CreateFeedRequest": {
             "type": "object",
             "required": [
                 "title",

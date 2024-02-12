@@ -11,7 +11,7 @@ definitions:
       url:
         type: string
     type: object
-  request.Feed:
+  request.CreateFeedRequest:
     properties:
       title:
         type: string
@@ -47,12 +47,12 @@ paths:
       - application/json
       description: Create a new feed with the data provided in the request
       parameters:
-      - description: Feed data
+      - description: CreateFeedRequest data
         in: body
         name: feed
         required: true
         schema:
-          $ref: '#/definitions/request.Feed'
+          $ref: '#/definitions/request.CreateFeedRequest'
       produces:
       - application/json
       responses:
@@ -67,14 +67,14 @@ paths:
     delete:
       description: Delete a feed with the given ID
       parameters:
-      - description: Feed ID
+      - description: CreateFeedRequest ID
         in: path
         name: id
         required: true
         type: string
       responses:
         "200":
-          description: Feed deleted successfully
+          description: CreateFeedRequest deleted successfully
       summary: Delete a feed
       tags:
       - feeds
@@ -82,14 +82,14 @@ paths:
     put:
       description: Sync a feed with the given ID
       parameters:
-      - description: Feed ID
+      - description: CreateFeedRequest ID
         in: path
         name: id
         required: true
         type: string
       responses:
         "204":
-          description: Feed synced successfully
+          description: CreateFeedRequest synced successfully
       summary: Sync a feed
       tags:
       - feeds

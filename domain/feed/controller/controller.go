@@ -45,11 +45,11 @@ func (f *Controller) GetFeeds(c echo.Context) error {
 // @Tags feeds
 // @Accept json
 // @Produce json
-// @Param feed body request.Feed true "Feed data"
+// @Param feed body request.CreateFeedRequest true "CreateFeedRequest data"
 // @Success 201 {object} presenter.Feed
 // @Router /feeds [post]
 func (f *Controller) CreateFeed(c echo.Context) error {
-	feedRequest := new(request.Feed)
+	feedRequest := new(request.CreateFeedRequest)
 	if err := c.Bind(feedRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -74,8 +74,8 @@ func (f *Controller) CreateFeed(c echo.Context) error {
 // @Summary Delete a feed
 // @Description Delete a feed with the given ID
 // @Tags feeds
-// @Param id path string true "Feed ID"
-// @Success 200 "Feed deleted successfully"
+// @Param id path string true "CreateFeedRequest ID"
+// @Success 200 "CreateFeedRequest deleted successfully"
 // @Router /feeds/{id} [delete]
 func (f *Controller) DeleteFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
@@ -98,8 +98,8 @@ func (f *Controller) DeleteFeed(c echo.Context) error {
 // @Summary Sync a feed
 // @Description Sync a feed with the given ID
 // @Tags feeds
-// @Param id path string true "Feed ID"
-// @Success 204 "Feed synced successfully"
+// @Param id path string true "CreateFeedRequest ID"
+// @Success 204 "CreateFeedRequest synced successfully"
 // @Router /feeds/{id}/sync [put]
 func (f *Controller) SyncFeed(c echo.Context) error {
 	UUID, err := uuid.Parse(c.Param("id"))
