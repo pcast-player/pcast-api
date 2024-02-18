@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"github.com/swaggo/echo-swagger"
 	"pcast-api/config"
+	"pcast-api/controller"
 	"pcast-api/db"
 	_ "pcast-api/docs"
-	"pcast-api/domain/feed"
 	"pcast-api/router"
-	episodeStore "pcast-api/store/episode"
-	feedStore "pcast-api/store/feed"
 )
 
 const usage = `Usage:
@@ -33,12 +31,9 @@ func main() {
 	r := router.New(c)
 	apiGroup := r.Group("/api")
 	d := db.New(c)
-	fs := feedStore.New(d)
-	_ = episodeStore.New(d)
+	controller.NewController(c, d, apiGroup)
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
-
-	feed.New(apiGroup, fs)
 
 	r.Logger.Fatal(r.Start(c.Server.GetAddress()))
 }

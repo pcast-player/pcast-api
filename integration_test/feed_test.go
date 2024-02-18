@@ -1,4 +1,4 @@
-package feed
+package integration_test
 
 import (
 	"encoding/json"
@@ -9,24 +9,26 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"pcast-api/controller"
+	"pcast-api/controller/feed"
 	"pcast-api/db"
 	"pcast-api/router"
-	"pcast-api/store/feed"
+	store "pcast-api/store/feed"
 	"testing"
 
 	"github.com/steinfletcher/apitest"
 )
 
 var d *gorm.DB
-var fs *feed.Store
+var feedStore *store.Store
 
 func TestMain(m *testing.M) {
-	d = db.NewTestDB("./../../fixtures/test/pcast.db")
-	fs = feed.New(d)
+	d = db.NewTestDB("./../fixtures/test/pcast.db")
+	feedStore = store.New(d)
 
 	code := m.Run()
 
-	fs.RemoveTables()
+	feedStore.RemoveTables()
 
 	os.Exit(code)
 }
@@ -35,7 +37,7 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	New(apiGroup, fs)
+	controller.NewController(nil, d, apiGroup)
 
 	return r
 }
@@ -83,7 +85,7 @@ func TestCreateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
 
 func TestCreateFeedPropertyNameError(t *testing.T) {
@@ -95,7 +97,7 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
 
 func TestCreateFeedMissingPropertyError(t *testing.T) {
@@ -107,7 +109,7 @@ func TestCreateFeedMissingPropertyError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
 
 func TestCreateFeedUrlValidationError(t *testing.T) {
@@ -119,7 +121,7 @@ func TestCreateFeedUrlValidationError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
 
 func TestDeleteFeed(t *testing.T) {
@@ -131,7 +133,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	fd := unmarshal[feed.Feed](t, &result)
+	fd := unmarshal[feed.Presenter](t, &result)
 
 	apitest.New().
 		Handler(newApp()).
@@ -156,7 +158,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
 
 func TestUpdateFeed(t *testing.T) {
@@ -169,7 +171,7 @@ func TestUpdateFeed(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	fd := unmarshal[feed.Feed](t, &result)
+	fd := unmarshal[feed.Presenter](t, &result)
 
 	apitest.New().
 		Handler(newApp()).
@@ -186,5 +188,5 @@ func TestUpdateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	fs.TruncateTables()
+	feedStore.TruncateTables()
 }
