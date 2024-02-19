@@ -9,13 +9,20 @@ import (
 	"strings"
 )
 
+var logLevels = map[string]log.Lvl{
+	"debug": log.DEBUG,
+	"info":  log.INFO,
+	"warn":  log.WARN,
+	"error": log.ERROR,
+}
+
 func New(c *config.Config) *echo.Echo {
 	e := echo.New()
 
 	if c.Server.Logging {
-		l := getLogLevel(c)
+		ll := getLogLevel(c.Server.LogLevel)
 
-		e.Logger.SetLevel(l)
+		e.Logger.SetLevel(ll)
 		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: c.Server.LogFormat}))
 	}
 
@@ -24,19 +31,13 @@ func New(c *config.Config) *echo.Echo {
 	return e
 }
 
-func getLogLevel(c *config.Config) log.Lvl {
-	switch strings.ToLower(c.Server.LogLevel) {
-	case "debug":
-		return log.DEBUG
-	case "info":
-		return log.INFO
-	case "warn":
-		return log.WARN
-	case "error":
-		return log.ERROR
-	default:
+func getLogLevel(s string) log.Lvl {
+	ll, ok := logLevels[strings.ToLower(s)]
+	if !ok {
 		return log.INFO
 	}
+
+	return ll
 }
 
 func NewTestRouter() *echo.Echo {
