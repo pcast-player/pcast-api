@@ -17,6 +17,15 @@ func NewHandler(service service.Interface) *Handler {
 	return &Handler{service: service}
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Description Create a new user with the data provided in the request
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param user body CreateRequest true "CreateRequest data"
+// @Success 201 {object} Presenter
+// @Router /user [post]
 func (h *Handler) createUser(c echo.Context) error {
 	userRequest := new(CreateRequest)
 	if err := c.Bind(userRequest); err != nil {
@@ -43,6 +52,16 @@ func (h *Handler) createUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
+// UpdatePassword godoc
+// @Summary Update user password
+// @Description Update user password with the data provided in the request
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "User ID"
+// @Param passwords body UpdatePasswordRequest true "UpdatePasswordRequest data"
+// @Success 200
+// @Router /user/password [put]
 func (h *Handler) updatePassword(c echo.Context) error {
 	r := c.Request()
 	uid, err := uuid.Parse(r.Header.Get("Authorization"))
