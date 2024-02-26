@@ -13,4 +13,12 @@ log_level = "debug"
 log_format = "${remote_ip} [${time_rfc3339}] \"${method} ${uri} ${protocol}\" ${status} ${bytes_out} ${user_agent}\n"
 
 [database]
+host = "localhost"
+port = 5432
+database = "pcast"
+user = "pcast"
+password = "pcast"
+max_connections = 20
+max_idle_connections = 10
+max_lifetime = "1h"
 logging = false

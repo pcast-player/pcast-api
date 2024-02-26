@@ -20,7 +20,20 @@ type Server struct {
 }
 
 type Database struct {
-	Logging bool
+	Host               string
+	Port               int
+	Database           string
+	User               string
+	Password           string
+	MaxConnections     int    `toml:"max_connections"`
+	MaxIdleConnections int    `toml:"max_idle_connections"`
+	MaxLifetime        string `toml:"max_lifetime"`
+	Logging            bool
+}
+
+func (d *Database) GetPostgresDSN() string {
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Europe/Berlin",
+		d.Host, d.Port, d.User, d.Password, d.Database)
 }
 
 func New(file string) *Config {

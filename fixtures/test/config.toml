@@ -6,4 +6,12 @@ log_level = "log_level"
 log_format = "log_format"
 
 [database]
+host = "localhost"
+port = 1337
+database = "pcast"
+user = "pcast"
+password = "pcast"
+max_connections = 10
+max_idle_connections = 5
+max_lifetime = "5m"
 logging = false
