@@ -10,8 +10,8 @@ type User struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	email     string
-	password  string
+	Email     string
+	Password  string
 }
 
 func (u *User) BeforeCreate(_ *gorm.DB) (err error) {
