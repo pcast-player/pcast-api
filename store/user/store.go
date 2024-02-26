@@ -1,6 +1,9 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Store struct {
 	db *gorm.DB
@@ -28,7 +31,7 @@ func (s *Store) FindAll() ([]User, error) {
 	return users, nil
 }
 
-func (s *Store) FindByID(id string) (*User, error) {
+func (s *Store) FindByID(id uuid.UUID) (*User, error) {
 	var user User
 	if err := s.db.First(&user, id).Error; err != nil {
 		return nil, err
