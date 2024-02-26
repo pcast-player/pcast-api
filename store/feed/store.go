@@ -3,7 +3,6 @@ package feed
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"log"
 )
 
 type Store struct {
@@ -51,18 +50,4 @@ func (s *Store) Update(feed *Feed) error {
 
 func (s *Store) Delete(feed *Feed) error {
 	return s.db.Delete(feed).Error
-}
-
-func (s *Store) TruncateTables() {
-	err := s.db.Exec("DELETE FROM feeds;").Error
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (s *Store) RemoveTables() {
-	err := s.db.Migrator().DropTable(&Feed{})
-	if err != nil {
-		log.Fatal(err)
-	}
 }

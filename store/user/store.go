@@ -51,17 +51,3 @@ func (s *Store) Update(user *User) error {
 func (s *Store) Delete(user *User) error {
 	return s.db.Delete(user).Error
 }
-
-func (s *Store) TruncateTables() {
-	err := s.db.Exec("DELETE FROM users;").Error
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (s *Store) RemoveTables() {
-	err := s.db.Migrator().DropTable(&User{})
-	if err != nil {
-		panic(err)
-	}
-}

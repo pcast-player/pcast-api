@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"pcast-api/db"
+	"pcast-api/helper"
 	"strconv"
 	"testing"
 )
@@ -31,7 +32,11 @@ func setup() {
 }
 
 func tearDown() {
-	es.RemoveTable()
+	helper.RemoveTable(d, &Episode{})
+}
+
+func truncateTable() {
+	helper.TruncateTables(d, "episodes")
 }
 
 func newEpisode() *Episode {
@@ -46,7 +51,7 @@ func TestCreateEpisode(t *testing.T) {
 	err := es.Create(episode)
 	assert.NoError(t, err)
 
-	es.TruncateTables()
+	truncateTable()
 }
 
 func TestFindEpisodeByID(t *testing.T) {
@@ -59,7 +64,7 @@ func TestFindEpisodeByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
 
-	es.TruncateTables()
+	truncateTable()
 }
 
 func TestDeleteEpisode(t *testing.T) {
@@ -70,7 +75,7 @@ func TestDeleteEpisode(t *testing.T) {
 	err = es.Delete(episode)
 	assert.NoError(t, err)
 
-	es.TruncateTables()
+	truncateTable()
 }
 
 func TestUpdateEpisode(t *testing.T) {
@@ -86,5 +91,5 @@ func TestUpdateEpisode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
 
-	es.TruncateTables()
+	truncateTable()
 }

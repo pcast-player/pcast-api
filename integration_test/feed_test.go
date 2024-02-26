@@ -12,6 +12,7 @@ import (
 	"pcast-api/controller"
 	"pcast-api/controller/feed"
 	"pcast-api/db"
+	"pcast-api/helper"
 	"pcast-api/router"
 	store "pcast-api/store/feed"
 	"testing"
@@ -20,15 +21,13 @@ import (
 )
 
 var d *gorm.DB
-var feedStore *store.Store
 
 func TestMain(m *testing.M) {
 	d = db.NewTestDB("./../fixtures/test/pcast.db")
-	feedStore = store.New(d)
 
 	code := m.Run()
 
-	feedStore.RemoveTables()
+	helper.RemoveTable(d, &store.Feed{})
 
 	os.Exit(code)
 }
@@ -58,6 +57,10 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 	return m
 }
 
+func truncateTable() {
+	helper.TruncateTables(d, "feeds")
+}
+
 func TestGetFeeds(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
@@ -85,7 +88,7 @@ func TestCreateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }
 
 func TestCreateFeedPropertyNameError(t *testing.T) {
@@ -97,7 +100,7 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }
 
 func TestCreateFeedMissingPropertyError(t *testing.T) {
@@ -109,7 +112,7 @@ func TestCreateFeedMissingPropertyError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }
 
 func TestCreateFeedUrlValidationError(t *testing.T) {
@@ -121,7 +124,7 @@ func TestCreateFeedUrlValidationError(t *testing.T) {
 		Status(http.StatusBadRequest).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }
 
 func TestDeleteFeed(t *testing.T) {
@@ -158,7 +161,7 @@ func TestDeleteFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }
 
 func TestUpdateFeed(t *testing.T) {
@@ -188,5 +191,5 @@ func TestUpdateFeed(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	feedStore.TruncateTables()
+	truncateTable()
 }

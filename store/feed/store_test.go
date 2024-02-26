@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"pcast-api/db"
+	"pcast-api/helper"
 	"testing"
 )
 
@@ -27,7 +28,11 @@ func setup() {
 }
 
 func tearDown() {
-	fs.RemoveTables()
+	helper.RemoveTable(d, &Feed{})
+}
+
+func truncateTable() {
+	helper.TruncateTables(d, "feeds")
 }
 
 func TestCreateFeed(t *testing.T) {
@@ -35,7 +40,7 @@ func TestCreateFeed(t *testing.T) {
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 
-	fs.TruncateTables()
+	truncateTable()
 }
 
 func TestFindFeedByID(t *testing.T) {
@@ -48,7 +53,7 @@ func TestFindFeedByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
-	fs.TruncateTables()
+	truncateTable()
 }
 
 func TestDeleteFeed(t *testing.T) {
@@ -59,7 +64,7 @@ func TestDeleteFeed(t *testing.T) {
 	err = fs.Delete(feed)
 	assert.NoError(t, err)
 
-	fs.TruncateTables()
+	truncateTable()
 }
 
 func TestUpdateFeed(t *testing.T) {
@@ -75,5 +80,5 @@ func TestUpdateFeed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
-	fs.TruncateTables()
+	truncateTable()
 }

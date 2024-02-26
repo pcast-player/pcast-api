@@ -51,17 +51,3 @@ func (s *Store) Update(episode *Episode) error {
 func (s *Store) Delete(episode *Episode) error {
 	return s.db.Delete(episode).Error
 }
-
-func (s *Store) TruncateTables() {
-	err := s.db.Exec("DELETE FROM episodes;").Error
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (s *Store) RemoveTable() {
-	err := s.db.Migrator().DropTable(&Episode{})
-	if err != nil {
-		panic(err)
-	}
-}

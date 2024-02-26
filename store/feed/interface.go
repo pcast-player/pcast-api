@@ -10,6 +10,4 @@ type Interface interface {
 	FindByID(id uuid.UUID) (*Feed, error)
 	Delete(feed *Feed) error
 	Update(feed *Feed) error
-	TruncateTables()
-	RemoveTables()
 }

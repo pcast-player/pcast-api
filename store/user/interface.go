@@ -8,6 +8,4 @@ type Interface interface {
 	FindByID(id uuid.UUID) (*User, error)
 	Delete(user *User) error
 	Update(user *User) error
-	TruncateTables()
-	RemoveTables()
 }
