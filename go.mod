@@ -3,6 +3,7 @@ module pcast-api
 go 1.21.6
 
 require (
+	github.com/alexedwards/argon2id v1.0.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.11.4
