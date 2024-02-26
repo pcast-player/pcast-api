@@ -1,4 +1,4 @@
-package integration_test
+package feed_test
 
 import (
 	"encoding/json"
@@ -23,7 +23,7 @@ import (
 var d *gorm.DB
 
 func TestMain(m *testing.M) {
-	d = db.NewTestDB("./../fixtures/test/pcast.db")
+	d = db.NewTestDB("./../../fixtures/test/pcast.db")
 
 	code := m.Run()
 
