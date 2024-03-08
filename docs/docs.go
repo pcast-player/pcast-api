@@ -25,6 +25,15 @@ const docTemplate = `{
                     "feeds"
                 ],
                 "summary": "Get all feeds",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -58,6 +67,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/feed.CreateRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -84,6 +100,13 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -106,6 +129,13 @@ const docTemplate = `{
                         "description": "Feed ID",
                         "name": "id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],

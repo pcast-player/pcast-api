@@ -55,6 +55,12 @@ paths:
   /feeds:
     get:
       description: Retrieve all feeds from the store
+      parameters:
+      - description: User ID
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -78,6 +84,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/feed.CreateRequest'
+      - description: User ID
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -97,6 +108,11 @@ paths:
         name: id
         required: true
         type: string
+      - description: User ID
+        in: header
+        name: Authorization
+        required: true
+        type: string
       responses:
         "200":
           description: Feed deleted successfully
@@ -110,6 +126,11 @@ paths:
       - description: Feed ID
         in: path
         name: id
+        required: true
+        type: string
+      - description: User ID
+        in: header
+        name: Authorization
         required: true
         type: string
       responses:
