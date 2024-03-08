@@ -2,15 +2,16 @@ package feed
 
 import (
 	"github.com/google/uuid"
+	modelInterface "pcast-api/service/model_interface"
 	store "pcast-api/store/feed"
 	"time"
 )
 
 type Service struct {
-	store store.Interface
+	store modelInterface.Feed
 }
 
-func NewService(store store.Interface) *Service {
+func NewService(store modelInterface.Feed) *Service {
 	return &Service{store: store}
 }
 

@@ -2,14 +2,15 @@ package user
 
 import (
 	"github.com/google/uuid"
+	modelInterface "pcast-api/service/model_interface"
 	store "pcast-api/store/user"
 )
 
 type Service struct {
-	store store.Interface
+	store modelInterface.User
 }
 
-func NewService(store store.Interface) *Service {
+func NewService(store modelInterface.User) *Service {
 	return &Service{store: store}
 }
 

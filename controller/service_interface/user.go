@@ -1,11 +1,11 @@
-package user
+package service_interface
 
 import (
 	"github.com/google/uuid"
 	store "pcast-api/store/user"
 )
 
-type Interface interface {
+type User interface {
 	GetUser(id uuid.UUID) (*store.User, error)
 	GetUsers() ([]store.User, error)
 	CreateUser(user *store.User) error

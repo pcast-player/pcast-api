@@ -5,15 +5,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
-	service "pcast-api/service/feed"
+	serviceInterface "pcast-api/controller/service_interface"
 	model "pcast-api/store/feed"
 )
 
 type Handler struct {
-	service service.Interface
+	service serviceInterface.Feed
 }
 
-func NewHandler(service service.Interface) *Handler {
+func NewHandler(service serviceInterface.Feed) *Handler {
 	return &Handler{service: service}
 }
 

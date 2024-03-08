@@ -1,11 +1,11 @@
-package feed
+package service_interface
 
 import (
 	"github.com/google/uuid"
 	store "pcast-api/store/feed"
 )
 
-type Interface interface {
+type Feed interface {
 	GetFeed(id uuid.UUID) (*store.Feed, error)
 	GetFeeds(userID uuid.UUID) ([]store.Feed, error)
 	CreateFeed(feed *store.Feed) error
