@@ -10,6 +10,7 @@ type Feed struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	UserID    uuid.UUID `gorm:"type:uuid"`
 	Title     string
 	URL       string
 	SyncedAt  *time.Time

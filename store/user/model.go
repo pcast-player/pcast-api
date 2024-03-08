@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"pcast-api/store/feed"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type User struct {
 	UpdatedAt time.Time
 	Email     string
 	Password  string
+	Feeds     []feed.Feed
 }
 
 func (u *User) BeforeCreate(_ *gorm.DB) (err error) {

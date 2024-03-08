@@ -20,7 +20,7 @@ import (
 var d *gorm.DB
 
 func TestMain(m *testing.M) {
-	d = db.NewTestDB("./../../fixtures/test/pcast.db")
+	d = db.NewTestDB("./../../fixtures/test/integration_user.db")
 
 	code := m.Run()
 

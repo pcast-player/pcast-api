@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB("./../../fixtures/test/pcast.db")
+	d = db.NewTestDB("./../../fixtures/test/store_user.db")
 	us = New(d)
 }
 

@@ -40,6 +40,24 @@ func (s *Store) FindByID(id uuid.UUID) (*Feed, error) {
 	return &feed, nil
 }
 
+func (s *Store) FindByUserID(userID uuid.UUID) ([]Feed, error) {
+	var feeds []Feed
+	if err := s.db.Where("user_id = ?", userID).Find(&feeds).Error; err != nil {
+		return nil, err
+	}
+
+	return feeds, nil
+}
+
+func (s *Store) FindByIdAndUserID(id, userID uuid.UUID) (*Feed, error) {
+	var feed Feed
+	if err := s.db.Where("id = ? AND user_id = ?", id, userID).First(&feed).Error; err != nil {
+		return nil, err
+	}
+
+	return &feed, nil
+}
+
 func (s *Store) Create(feed *Feed) error {
 	return s.db.Create(feed).Error
 }

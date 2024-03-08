@@ -10,4 +10,6 @@ type Interface interface {
 	FindByID(id uuid.UUID) (*Feed, error)
 	Delete(feed *Feed) error
 	Update(feed *Feed) error
+	FindByUserID(userID uuid.UUID) ([]Feed, error)
+	FindByIdAndUserID(id, userID uuid.UUID) (*Feed, error)
 }

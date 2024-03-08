@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB("./../../fixtures/test/pcast.db")
+	d = db.NewTestDB("./../../fixtures/test/store_feed.db")
 	fs = New(d)
 }
 
@@ -50,6 +51,34 @@ func TestFindFeedByID(t *testing.T) {
 
 	foundFeed, err := fs.FindByID(feed.ID)
 
+	assert.NoError(t, err)
+	assert.Equal(t, feed.URL, foundFeed.URL)
+
+	truncateTable()
+}
+
+func TestStore_FindByUserID(t *testing.T) {
+	userID, err := uuid.NewV7()
+	assert.NoError(t, err)
+	feed := &Feed{URL: "https://example.com", UserID: userID}
+	err = fs.Create(feed)
+	assert.NoError(t, err)
+
+	foundFeeds, err := fs.FindByUserID(userID)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, foundFeeds)
+
+	truncateTable()
+}
+
+func TestStore_FindByIdAndUserID(t *testing.T) {
+	userID, err := uuid.NewV7()
+	assert.NoError(t, err)
+	feed := &Feed{URL: "https://example.com", UserID: userID}
+	err = fs.Create(feed)
+	assert.NoError(t, err)
+
+	foundFeed, err := fs.FindByIdAndUserID(feed.ID, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 

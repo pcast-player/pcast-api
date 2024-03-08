@@ -2,6 +2,7 @@ POST http://localhost:8080/api/feeds
 Content-Type: application/json
 
 {
+  "userId": "018de731-f8ac-75b2-85ef-ad21c75719df",
   "url": "https://feeds.soundcloud.com/users/soundcloud:users:21436304/sounds.rss",
   "title": "ThePod"
 }
