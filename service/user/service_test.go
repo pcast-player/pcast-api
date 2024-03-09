@@ -1,6 +1,9 @@
 package user
 
 import (
+	"fmt"
+	"github.com/alexedwards/argon2id"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	store "pcast-api/store/user"
@@ -126,4 +129,38 @@ func TestService_GetUsers_Error(t *testing.T) {
 
 	_, err := service.GetUsers()
 	assert.Error(t, err)
+}
+
+func TestService_Login(t *testing.T) {
+	userID, err := uuid.NewV7()
+	assert.NoError(t, err)
+
+	password := "password"
+	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
+	assert.NoError(t, err)
+
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	s := &mockStore{user: user}
+	service := NewService(s)
+
+	tokenString, err := service.Login(user.Email, password)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, tokenString)
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte("testsecret"), nil
+	})
+	assert.NoError(t, err)
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		assert.Equal(t, user.ID.String(), claims["sub"])
+	} else {
+		assert.Fail(t, "claims not found")
+	}
 }
