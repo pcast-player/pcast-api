@@ -61,7 +61,7 @@ func truncateTable() {
 func TestCreateUser(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
-		Post("/api/user").
+		Post("/api/user/register").
 		JSON(`{"email": "foo@bar.com", "password": "test"}`).
 		Expect(t).
 		Status(http.StatusCreated).
@@ -73,7 +73,7 @@ func TestCreateUser(t *testing.T) {
 func TestUpdatePassword(t *testing.T) {
 	result := apitest.New().
 		Handler(newApp()).
-		Post("/api/user").
+		Post("/api/user/register").
 		JSON(`{"email": "foo@bar.com", "password": "test"}`).
 		Expect(t).
 		Status(http.StatusCreated).

@@ -69,7 +69,7 @@ func truncateTables() {
 func createUser(t *testing.T) uuid.UUID {
 	result := apitest.New().
 		Handler(newApp()).
-		Post("/api/user").
+		Post("/api/user/register").
 		JSON(`{"email": "foo@bar.com", "password": "test"}`).
 		Expect(t).
 		Status(http.StatusCreated).

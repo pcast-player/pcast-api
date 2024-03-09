@@ -17,17 +17,17 @@ func NewHandler(service serviceInterface.User) *Handler {
 	return &Handler{service: service}
 }
 
-// CreateUser godoc
+// RegisterUser godoc
 // @Summary Create a new user
-// @Description Create a new user with the data provided in the request
+// @Description Register a new user with the data provided in the request
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param user body CreateRequest true "CreateRequest data"
+// @Param user body RegisterRequest true "RegisterRequest data"
 // @Success 201 {object} Presenter
 // @Router /user [post]
-func (h *Handler) createUser(c echo.Context) error {
-	userRequest := new(CreateRequest)
+func (h *Handler) registerUser(c echo.Context) error {
+	userRequest := new(RegisterRequest)
 	if err := c.Bind(userRequest); err != nil {
 		return err
 	}
@@ -108,6 +108,6 @@ func (h *Handler) updatePassword(c echo.Context) error {
 }
 
 func (h *Handler) Register(g *echo.Group) {
-	g.POST("/user", h.createUser)
+	g.POST("/user/register", h.registerUser)
 	g.PUT("/user/password", h.updatePassword)
 }
