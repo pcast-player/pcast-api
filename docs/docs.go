@@ -148,7 +148,7 @@ const docTemplate = `{
         },
         "/user": {
             "post": {
-                "description": "Create a new user with the data provided in the request",
+                "description": "Register a new user with the data provided in the request",
                 "consumes": [
                     "application/json"
                 ],
@@ -161,12 +161,12 @@ const docTemplate = `{
                 "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "CreateRequest data",
+                        "description": "RegisterRequest data",
                         "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.CreateRequest"
+                            "$ref": "#/definitions/user.RegisterRequest"
                         }
                     }
                 ],
@@ -252,7 +252,15 @@ const docTemplate = `{
                 }
             }
         },
-        "user.CreateRequest": {
+        "user.Presenter": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -263,14 +271,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.Presenter": {
-            "type": "object",
-            "properties": {
-                "id": {
                     "type": "string"
                 }
             }

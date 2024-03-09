@@ -21,7 +21,12 @@ definitions:
       url:
         type: string
     type: object
-  user.CreateRequest:
+  user.Presenter:
+    properties:
+      id:
+        type: string
+    type: object
+  user.RegisterRequest:
     properties:
       email:
         type: string
@@ -30,11 +35,6 @@ definitions:
     required:
     - email
     - password
-    type: object
-  user.Presenter:
-    properties:
-      id:
-        type: string
     type: object
   user.UpdatePasswordRequest:
     properties:
@@ -143,14 +143,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new user with the data provided in the request
+      description: Register a new user with the data provided in the request
       parameters:
-      - description: CreateRequest data
+      - description: RegisterRequest data
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/user.CreateRequest'
+          $ref: '#/definitions/user.RegisterRequest'
       produces:
       - application/json
       responses:
