@@ -56,6 +56,18 @@ func TestFindUserByID(t *testing.T) {
 	truncateTable()
 }
 
+func TestFindUserByEmail(t *testing.T) {
+	user := &User{Email: "foo@bar.com", Password: "password"}
+	err := us.Create(user)
+	assert.NoError(t, err)
+
+	foundUser, err := us.FindByEmail(user.Email)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Email, foundUser.Email)
+
+	truncateTable()
+}
+
 func TestDeleteUser(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
 	err := us.Create(user)

@@ -40,6 +40,15 @@ func (s *Store) FindByID(id uuid.UUID) (*User, error) {
 	return &user, nil
 }
 
+func (s *Store) FindByEmail(email string) (*User, error) {
+	var user User
+	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (s *Store) Create(user *User) error {
 	return s.db.Create(user).Error
 }
