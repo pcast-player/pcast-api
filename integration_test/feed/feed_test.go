@@ -1,6 +1,7 @@
 package feed_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,27 +13,26 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
 	"github.com/steinfletcher/apitest-jsonpath"
-	"gorm.io/gorm"
 	"pcast-api/controller"
 	"pcast-api/controller/feed"
 	"pcast-api/controller/user"
 	"pcast-api/db"
-	"pcast-api/helper"
 	"pcast-api/router"
-	userStore "pcast-api/store/user"
 )
 
-var gormDB *gorm.DB
+var sqlDB *sql.DB
 
 const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
-	// Use GORM for user (not migrated yet)
-	gormDB = db.NewTestDB("./../../fixtures/test/integration_feed.db")
+	sqlDB = db.NewTestDBSQL(testDSN)
 
 	code := m.Run()
 
-	helper.RemoveTable(gormDB, &userStore.User{})
+	// Clean up
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Exec("TRUNCATE TABLE feeds CASCADE")
+	sqlDB.Close()
 
 	os.Exit(code)
 }
@@ -41,10 +41,7 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	// Use SQL DB for feed (migrated to sqlc)
-	sqlDB := db.NewTestDBSQL(testDSN)
-
-	controller.NewController(nil, gormDB, sqlDB, apiGroup)
+	controller.NewController(nil, sqlDB, apiGroup)
 
 	return r
 }
@@ -66,10 +63,7 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 }
 
 func truncateTables() {
-	helper.TruncateTables(gormDB, "users")
-	// Feeds table is in Postgres, truncate manually
-	sqlDB := db.NewTestDBSQL(testDSN)
-	defer sqlDB.Close()
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
 	sqlDB.Exec("TRUNCATE TABLE feeds")
 }
 

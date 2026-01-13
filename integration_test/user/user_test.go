@@ -1,30 +1,33 @@
 package user
 
 import (
+	"database/sql"
 	"encoding/json"
-	"github.com/labstack/echo/v4"
-	"github.com/steinfletcher/apitest"
-	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"os"
+	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/steinfletcher/apitest"
 	"pcast-api/controller"
 	"pcast-api/controller/user"
 	"pcast-api/db"
-	"pcast-api/helper"
 	"pcast-api/router"
-	store "pcast-api/store/user"
-	"testing"
 )
 
-var d *gorm.DB
+var sqlDB *sql.DB
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
-	d = db.NewTestDB("./../../fixtures/test/integration_user.db")
+	sqlDB = db.NewTestDBSQL(testDSN)
 
 	code := m.Run()
 
-	helper.RemoveTable(d, &store.User{})
+	// Clean up
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Close()
 
 	os.Exit(code)
 }
@@ -49,16 +52,13 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	// Use SQL DB for feed (migrated to sqlc)
-	sqlDB := db.NewTestDBSQL("host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable")
-
-	controller.NewController(nil, d, sqlDB, apiGroup)
+	controller.NewController(nil, sqlDB, apiGroup)
 
 	return r
 }
 
 func truncateTable() {
-	helper.RemoveTable(d, &store.User{})
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
 }
 
 func TestCreateUser(t *testing.T) {

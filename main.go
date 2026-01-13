@@ -31,12 +31,10 @@ func main() {
 	r := router.New(c)
 	apiGroup := r.Group("/api")
 
-	// Initialize both database connections during migration
-	// TODO: Remove gormDB once all stores migrate to sqlc
-	gormDB := db.New(c)
-	sqlDB := db.NewSQL(c)
+	// Initialize database connection (all stores now use sqlc)
+	d := db.NewSQL(c)
 
-	controller.NewController(c, gormDB, sqlDB, apiGroup)
+	controller.NewController(c, d, apiGroup)
 
 	r.GET("/swagger/*", echoSwagger.WrapHandler)
 
