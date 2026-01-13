@@ -27,6 +27,9 @@ const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast
 func TestMain(m *testing.M) {
 	sqlDB = db.NewTestDBSQL(testDSN)
 
+	// Run migrations to create tables
+	runMigrations()
+
 	code := m.Run()
 
 	// Clean up
@@ -35,6 +38,68 @@ func TestMain(m *testing.M) {
 	sqlDB.Close()
 
 	os.Exit(code)
+}
+
+func runMigrations() {
+	// Create episodes table (from migration 00001)
+	_, err := sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run episode migrations: %v", err))
+	}
+
+	// Create feeds table (from migration 00002)
+	_, err = sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS feeds (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			user_id UUID NOT NULL,
+			title VARCHAR(500) NOT NULL,
+			url VARCHAR(1000) NOT NULL,
+			synced_at TIMESTAMP
+		);
+		CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run feed migrations: %v", err))
+	}
+
+	// Create users table (from migration 00003)
+	_, err = sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			email VARCHAR(255) UNIQUE NOT NULL,
+			password VARCHAR(255) NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run user migrations: %v", err))
+	}
+
+	// Add foreign key constraint
+	_, err = sqlDB.Exec(`
+		ALTER TABLE feeds 
+		ADD CONSTRAINT IF NOT EXISTS fk_feeds_user 
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+	`)
+	if err != nil {
+		// Constraint might already exist, ignore error
+	}
 }
 
 func newApp() *echo.Echo {
