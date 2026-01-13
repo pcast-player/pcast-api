@@ -1,6 +1,7 @@
 package feed_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,6 +24,7 @@ import (
 )
 
 var gormDB *gorm.DB
+var sqlDB *sql.DB
 
 const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
@@ -30,19 +32,60 @@ func TestMain(m *testing.M) {
 	// Use GORM for user (not migrated yet)
 	gormDB = db.NewTestDB("./../../fixtures/test/integration_feed.db")
 
+	// Use SQL DB for feed (migrated to sqlc)
+	sqlDB = db.NewTestDBSQL(testDSN)
+
+	// Run migrations for sqlc tables
+	runMigrations()
+
 	code := m.Run()
 
 	helper.RemoveTable(gormDB, &userStore.User{})
+	sqlDB.Close()
 
 	os.Exit(code)
+}
+
+func runMigrations() {
+	// Create episodes table (from migration 00001)
+	_, err := sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run episode migrations: %v", err))
+	}
+
+	// Create feeds table (from migration 00002)
+	_, err = sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS feeds (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			user_id UUID NOT NULL,
+			title VARCHAR(500) NOT NULL,
+			url VARCHAR(1000) NOT NULL,
+			synced_at TIMESTAMP
+		);
+		CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run feed migrations: %v", err))
+	}
 }
 
 func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
-
-	// Use SQL DB for feed (migrated to sqlc)
-	sqlDB := db.NewTestDBSQL(testDSN)
 
 	controller.NewController(nil, gormDB, sqlDB, apiGroup)
 
@@ -67,9 +110,6 @@ func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
 
 func truncateTables() {
 	helper.TruncateTables(gormDB, "users")
-	// Feeds table is in Postgres, truncate manually
-	sqlDB := db.NewTestDBSQL(testDSN)
-	defer sqlDB.Close()
 	sqlDB.Exec("TRUNCATE TABLE feeds")
 }
 
