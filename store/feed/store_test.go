@@ -1,17 +1,20 @@
 package feed
 
 import (
+	"database/sql"
+	"fmt"
+	"os"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
-	"os"
 	"pcast-api/db"
-	"pcast-api/helper"
-	"testing"
 )
 
-var d *gorm.DB
+var d *sql.DB
 var fs *Store
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
 	setup()
@@ -24,20 +27,68 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB("./../../fixtures/test/store_feed.db")
+	d = db.NewTestDBSQL(testDSN)
+
+	// Run migrations
+	runMigrations()
+
 	fs = New(d)
 }
 
 func tearDown() {
-	helper.RemoveTable(d, &Feed{})
+	// Clean up test data
+	truncateTable()
+	d.Close()
+}
+
+func runMigrations() {
+	// Create episodes table first (from migration 00001)
+	_, err := d.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run episode migrations: %v", err))
+	}
+
+	// Create feeds table (from migration 00002)
+	_, err = d.Exec(`
+		CREATE TABLE IF NOT EXISTS feeds (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			user_id UUID NOT NULL,
+			title VARCHAR(500) NOT NULL,
+			url VARCHAR(1000) NOT NULL,
+			synced_at TIMESTAMP
+		);
+		CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run feed migrations: %v", err))
+	}
 }
 
 func truncateTable() {
-	helper.TruncateTables(d, "feeds")
+	_, err := d.Exec("TRUNCATE TABLE feeds")
+	if err != nil {
+		// Table might not exist yet, ignore error
+		return
+	}
 }
 
 func TestCreateFeed(t *testing.T) {
-	feed := &Feed{URL: "https://example.com"}
+	userID, _ := uuid.NewV7()
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 
@@ -45,7 +96,8 @@ func TestCreateFeed(t *testing.T) {
 }
 
 func TestFindFeedByID(t *testing.T) {
-	feed := &Feed{URL: "https://example.com"}
+	userID, _ := uuid.NewV7()
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 
@@ -60,7 +112,7 @@ func TestFindFeedByID(t *testing.T) {
 func TestStore_FindByUserID(t *testing.T) {
 	userID, err := uuid.NewV7()
 	assert.NoError(t, err)
-	feed := &Feed{URL: "https://example.com", UserID: userID}
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err = fs.Create(feed)
 	assert.NoError(t, err)
 
@@ -74,7 +126,7 @@ func TestStore_FindByUserID(t *testing.T) {
 func TestStore_FindByIdAndUserID(t *testing.T) {
 	userID, err := uuid.NewV7()
 	assert.NoError(t, err)
-	feed := &Feed{URL: "https://example.com", UserID: userID}
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err = fs.Create(feed)
 	assert.NoError(t, err)
 
@@ -86,7 +138,8 @@ func TestStore_FindByIdAndUserID(t *testing.T) {
 }
 
 func TestDeleteFeed(t *testing.T) {
-	feed := &Feed{URL: "https://example.com"}
+	userID, _ := uuid.NewV7()
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 
@@ -97,7 +150,8 @@ func TestDeleteFeed(t *testing.T) {
 }
 
 func TestUpdateFeed(t *testing.T) {
-	feed := &Feed{URL: "https://example.com"}
+	userID, _ := uuid.NewV7()
+	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 

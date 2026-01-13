@@ -49,7 +49,10 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	controller.NewController(nil, d, apiGroup)
+	// Use SQL DB for feed (migrated to sqlc)
+	sqlDB := db.NewTestDBSQL("host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable")
+
+	controller.NewController(nil, d, sqlDB, apiGroup)
 
 	return r
 }
