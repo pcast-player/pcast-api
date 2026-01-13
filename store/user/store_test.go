@@ -1,16 +1,18 @@
 package user
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
+	"database/sql"
 	"os"
-	"pcast-api/db"
-	"pcast-api/helper"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"pcast-api/db"
 )
 
-var d *gorm.DB
+var d *sql.DB
 var us *Store
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
 	setup()
@@ -23,16 +25,41 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB("./../../fixtures/test/store_user.db")
+	d = db.NewTestDBSQL(testDSN)
+
+	// Run migrations
+	runMigrations()
+
 	us = New(d)
 }
 
 func tearDown() {
-	helper.RemoveTable(d, "users")
+	// Clean up test data
+	truncateTable()
+	d.Close()
+}
+
+func runMigrations() {
+	// Create users table if not exists
+	// Split statements to avoid race conditions in parallel tests
+	d.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			email VARCHAR(255) UNIQUE NOT NULL,
+			password VARCHAR(255) NOT NULL
+		)
+	`)
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 }
 
 func truncateTable() {
-	helper.TruncateTables(d, "users")
+	_, err := d.Exec("TRUNCATE TABLE users CASCADE")
+	if err != nil {
+		// Table might not exist yet, ignore error
+		return
+	}
 }
 
 func TestCreateUser(t *testing.T) {

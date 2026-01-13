@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 	"pcast-api/config"
 	"pcast-api/controller/feed"
 	"pcast-api/controller/user"
@@ -16,20 +15,17 @@ import (
 
 type Controller struct {
 	config *config.Config
-	gormDB *gorm.DB
-	sqlDB  *sql.DB
+	db     *sql.DB
 }
 
 // NewController initializes all handlers
-// TODO: Once all stores migrate to sqlc, remove gormDB parameter
-func NewController(config *config.Config, gormDB *gorm.DB, sqlDB *sql.DB, g *echo.Group) *Controller {
-	newFeedHandler(sqlDB, g)
-	newUserHandler(gormDB, g)
+func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller {
+	newFeedHandler(db, g)
+	newUserHandler(db, g)
 
 	return &Controller{
 		config: config,
-		gormDB: gormDB,
-		sqlDB:  sqlDB,
+		db:     db,
 	}
 }
 
@@ -41,7 +37,7 @@ func newFeedHandler(db *sql.DB, g *echo.Group) {
 	handler.Register(g)
 }
 
-func newUserHandler(db *gorm.DB, g *echo.Group) {
+func newUserHandler(db *sql.DB, g *echo.Group) {
 	store := userStore.New(db)
 	service := userService.NewService(store)
 	handler := user.NewHandler(service)
