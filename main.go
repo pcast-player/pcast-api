@@ -32,7 +32,7 @@ func main() {
 	apiGroup := r.Group("/api")
 
 	// Initialize database connection (all stores now use sqlc)
-	d := db.NewSQL(c)
+	d := db.New(c)
 
 	controller.NewController(c, d, apiGroup)
 

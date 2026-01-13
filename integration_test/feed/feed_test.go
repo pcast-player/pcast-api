@@ -25,7 +25,7 @@ var sqlDB *sql.DB
 const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
-	sqlDB = db.NewTestDBSQL(testDSN)
+	sqlDB = db.NewTestDB(testDSN)
 
 	code := m.Run()
 

@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDBSQL(testDSN)
+	d = db.NewTestDB(testDSN)
 
 	// Run migrations
 	runMigrations()
