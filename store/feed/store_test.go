@@ -42,8 +42,26 @@ func tearDown() {
 }
 
 func runMigrations() {
-	// Create feeds table if not exists
+	// Create episodes table first (from migration 00001)
 	_, err := d.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run episode migrations: %v", err))
+	}
+
+	// Create feeds table (from migration 00002)
+	_, err = d.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -56,7 +74,7 @@ func runMigrations() {
 		CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
 	`)
 	if err != nil {
-		panic(fmt.Sprintf("failed to run migrations: %v", err))
+		panic(fmt.Sprintf("failed to run feed migrations: %v", err))
 	}
 }
 
