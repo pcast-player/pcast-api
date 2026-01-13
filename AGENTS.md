@@ -6,6 +6,23 @@ This guide provides essential information for AI coding agents working in this r
 
 PCast API is a podcast player backend written in Go 1.22+ using the Echo framework, GORM ORM, and SQLite/PostgreSQL databases. The codebase follows a clean 3-layer architecture: Controller → Service → Store.
 
+## Quick Reference
+
+```bash
+# Common commands
+make install         # Install dependencies & swag tool
+make build           # Build with race detector
+make run             # Run the API server
+make test            # Run all tests with race detector
+make create-docs     # Generate Swagger documentation
+
+# Run a single test
+go test -v -race ./service/user -run TestService_GetUser
+
+# Run tests with coverage
+go test -v -race -cover ./...
+```
+
 ## Build, Test, and Run Commands
 
 ### Installation
@@ -34,6 +51,9 @@ The API starts at http://localhost:8080 with Swagger docs at http://localhost:80
 # Run all tests
 make test            # Run all tests with race detector
 go test -v -race ./...
+
+# Run tests with coverage
+go test -v -race -cover ./...
 
 # Run tests in a specific package
 go test -v -race ./service/user
@@ -105,6 +125,13 @@ import (
 )
 ```
 
+**In controllers**, when importing domain models for type usage, use `model` alias:
+```go
+import (
+    model "pcast-api/store/feed"
+)
+```
+
 ### Naming Conventions
 
 - **Files**: lowercase with underscores: `handler.go`, `service_test.go`, `create_request.go`
@@ -113,6 +140,8 @@ import (
 - **Response DTOs**: Name as `Presenter` with constructor: `type Presenter struct` + `func NewPresenter()`
 - **Test functions**: `TestStructName_MethodName` or `TestMethodName`
 - **Variables**: camelCase for locals, PascalCase for exported
+- **Handler methods**: Can be unexported (lowercase) if only called via `Register()`: `registerUser()`, `updatePassword()`
+- **Request variables**: Use short names: `r := new(CreateRequest)` or `userRequest := new(RegisterRequest)`
 
 ### Type Definitions
 
@@ -136,14 +165,23 @@ func (f *Feed) BeforeCreate(_ *gorm.DB) (err error) {
 
 **Request DTOs (Controller Layer):**
 ```go
+// CreateRequest represents a feed request
+// @model CreateRequest
 type CreateRequest struct {
     Title string `json:"title" validate:"required"`
     URL   string `json:"url" validate:"required,url"`
 }
 ```
 
+Common validation tags:
+- `validate:"required"` - field is required
+- `validate:"email"` - valid email format
+- `validate:"url"` - valid URL format
+
 **Response DTOs (Controller Layer):**
 ```go
+// Presenter represents a feed presenter
+// @model Presenter
 type Presenter struct {
     ID       uuid.UUID  `json:"id"`
     Title    string     `json:"title"`
@@ -158,6 +196,8 @@ func NewPresenter(feed *feed.Feed) *Presenter {
     }
 }
 ```
+
+Note: Presenters filter out sensitive data (e.g., passwords are never included in User presenters).
 
 ### Struct and Constructor Patterns
 
@@ -182,6 +222,8 @@ func (h *Handler) Register(g *echo.Group) {
     g.DELETE("/feeds/:id", h.DeleteFeed)
 }
 ```
+
+Note: Only the `Register()` method needs to be exported; handler methods can be unexported.
 
 ### Error Handling
 
@@ -208,10 +250,23 @@ func (h *Handler) GetFeeds(c echo.Context) error {
 }
 ```
 
+**Error handling patterns:**
 - Return errors immediately with appropriate HTTP status
 - Use `c.NoContent(status)` for errors without body
 - Use `c.JSON(status, data)` for success responses
 - Propagate GORM errors from store through service to controller
+- For `c.Bind()` and `c.Validate()` errors, return the error directly (Echo handles it)
+
+**Request binding and validation:**
+```go
+r := new(CreateRequest)
+if err := c.Bind(r); err != nil {
+    return err  // Echo handles validation errors
+}
+if err := c.Validate(r); err != nil {
+    return err  // Returns 400 with validation details
+}
+```
 
 ### Swagger Documentation
 
@@ -263,19 +318,77 @@ func TestService_GetUser(t *testing.T) {
 Use `TestMain` for setup/teardown with SQLite:
 
 ```go
+var d *gorm.DB
+var fs *Store
+
 func TestMain(m *testing.M) {
     setup()
     code := m.Run()
     tearDown()
     os.Exit(code)
 }
+
+func setup() {
+    d = db.NewTestDB("./../../fixtures/test/store_feed.db")
+    fs = New(d)
+}
+
+func tearDown() {
+    helper.RemoveTable(d, &Feed{})
+}
+
+func truncateTable() {
+    helper.TruncateTables(d, "feeds")
+}
+
+func TestCreateFeed(t *testing.T) {
+    feed := &Feed{URL: "https://example.com"}
+    err := fs.Create(feed)
+    assert.NoError(t, err)
+    
+    truncateTable()  // Clean up after each test
+}
 ```
+
+**Store test patterns:**
+- Test database files: `./../../fixtures/test/{package_name}.db`
+- Call `truncateTable()` after each test to clean data
+- Use `helper.TruncateTables(db, "table_name")` for cleanup
+- Use `helper.RemoveTable(db, &Model{})` in teardown
 
 ### Integration Tests
 
 Use `apitest` library for full HTTP testing:
 
 ```go
+var d *gorm.DB
+
+func TestMain(m *testing.M) {
+    d = db.NewTestDB("./../../fixtures/test/integration_feed.db")
+    code := m.Run()
+    helper.RemoveTable(d, &feedStore.Feed{})
+    helper.RemoveTable(d, &userStore.User{})
+    os.Exit(code)
+}
+
+func truncateTables() {
+    helper.TruncateTables(d, "feeds")
+    helper.TruncateTables(d, "users")
+}
+
+func createUser(t *testing.T) uuid.UUID {
+    result := apitest.New().
+        Handler(newApp()).
+        Post("/api/user/register").
+        JSON(`{"email": "foo@bar.com", "password": "test"}`).
+        Expect(t).
+        Status(http.StatusCreated).
+        End()
+    
+    u := unmarshal[user.Presenter](t, &result)
+    return u.ID
+}
+
 func TestCreateFeed(t *testing.T) {
     userID := createUser(t)
     
@@ -289,9 +402,15 @@ func TestCreateFeed(t *testing.T) {
         Assert(jsonpath.Equal("$.title", "Example")).
         End()
     
-    truncateTables()
+    truncateTables()  // Always clean up after each test
 }
 ```
+
+**Integration test patterns:**
+- Test database files: `./../../fixtures/test/integration_{domain}.db`
+- Use `apitest` for HTTP testing and `apitest-jsonpath` for assertions
+- Call `truncateTables()` after each test
+- Helper functions like `createUser()` for test data setup
 
 ## Additional Notes
 
@@ -301,12 +420,43 @@ func TestCreateFeed(t *testing.T) {
 - **Database**: GORM with AutoMigrate in store constructors
 - **Auth**: Currently simple UUID in Authorization header (no JWT middleware yet)
 - **Config**: TOML-based configuration in `config.toml`
+- **Validation**: Custom validator using `go-playground/validator` configured in router
+- **Service Layer**: Often thin pass-through layer coordinating between controllers and stores
+- **Test Helpers**: `helper` package provides `TruncateTables()` and `RemoveTable()` utilities
+- **Ignored Files**: `.gitignore` excludes `*.db`, `target/`, and `.idea/`
+
+## File Organization
+
+### Test Database Files
+- Store tests: `./../../fixtures/test/store_{domain}.db`
+- Integration tests: `./../../fixtures/test/integration_{domain}.db`
+- All `.db` files are gitignored
+
+### Domain Structure
+Each domain (user, feed, episode) follows the same pattern:
+```
+controller/{domain}/
+  handler.go          # HTTP handlers with Register() method
+  presenter.go        # Response DTO with NewPresenter()
+  *_request.go        # Request DTOs (create_request.go, etc.)
+
+service/{domain}/
+  service.go          # Business logic
+  service_test.go     # Unit tests with mocks
+
+store/{domain}/
+  model.go            # GORM model with BeforeCreate hook
+  store.go            # Data access methods
+  store_test.go       # Store tests with SQLite
+```
 
 ## Common Pitfalls
 
 - Don't forget blank lines between import groups
 - Always use pointer receivers for struct methods
 - Use pointer types for nullable database fields
-- Call `truncateTables()` after each integration test
+- Call `truncateTable()` or `truncateTables()` after each test
 - Enable race detector in tests: `-race` flag
-- Don't forget to regenerate Swagger docs after API changes
+- Don't forget to regenerate Swagger docs after API changes: `make create-docs`
+- Test database paths use `./../../fixtures/test/` relative to test file location
+- Import domain stores with appropriate aliases to avoid conflicts
