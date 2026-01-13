@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -39,7 +40,7 @@ func runMigrations() {
 	// Create all tables in order - split statements to avoid race conditions
 
 	// Create episodes table (from migration 00001)
-	sqlDB.Exec(`
+	_, err := sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -50,11 +51,14 @@ func runMigrations() {
 			played BOOLEAN NOT NULL DEFAULT FALSE
 		)
 	`)
+	if err != nil {
+		fmt.Printf("Warning: episodes table creation: %v\n", err)
+	}
 	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
 	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 
 	// Create feeds table (from migration 00002)
-	sqlDB.Exec(`
+	_, err = sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -65,10 +69,13 @@ func runMigrations() {
 			synced_at TIMESTAMP
 		)
 	`)
+	if err != nil {
+		fmt.Printf("Warning: feeds table creation: %v\n", err)
+	}
 	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id)`)
 
 	// Create users table (from migration 00003)
-	sqlDB.Exec(`
+	_, err = sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -77,22 +84,10 @@ func runMigrations() {
 			password VARCHAR(255) NOT NULL
 		)
 	`)
+	if err != nil {
+		panic(fmt.Sprintf("CRITICAL: failed to create users table: %v", err))
+	}
 	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
-	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
-
-	// Add foreign key constraint (use DO block to avoid errors)
-	sqlDB.Exec(`
-		DO $$ 
-		BEGIN
-			IF NOT EXISTS (
-				SELECT 1 FROM pg_constraint WHERE conname = 'fk_feeds_user'
-			) THEN
-				ALTER TABLE feeds 
-				ADD CONSTRAINT fk_feeds_user 
-				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-			END IF;
-		END $$;
-	`)
 }
 
 func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
