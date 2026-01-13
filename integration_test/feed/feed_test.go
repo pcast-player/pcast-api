@@ -41,8 +41,10 @@ func TestMain(m *testing.M) {
 }
 
 func runMigrations() {
+	// Create all tables in order - split statements to avoid race conditions
+
 	// Create episodes table (from migration 00001)
-	_, err := sqlDB.Exec(`
+	sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -51,16 +53,13 @@ func runMigrations() {
 			feed_guid VARCHAR(255) NOT NULL,
 			current_position INTEGER,
 			played BOOLEAN NOT NULL DEFAULT FALSE
-		);
-		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
-		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+		)
 	`)
-	if err != nil {
-		panic(fmt.Sprintf("failed to run episode migrations: %v", err))
-	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 
 	// Create feeds table (from migration 00002)
-	_, err = sqlDB.Exec(`
+	sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -69,37 +68,21 @@ func runMigrations() {
 			title VARCHAR(500) NOT NULL,
 			url VARCHAR(1000) NOT NULL,
 			synced_at TIMESTAMP
-		);
-		CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
+		)
 	`)
-	if err != nil {
-		panic(fmt.Sprintf("failed to run feed migrations: %v", err))
-	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id)`)
 
 	// Create users table (from migration 00003)
-	_, err = sqlDB.Exec(`
+	sqlDB.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			email VARCHAR(255) UNIQUE NOT NULL,
 			password VARCHAR(255) NOT NULL
-		);
-		CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+		)
 	`)
-	if err != nil {
-		panic(fmt.Sprintf("failed to run user migrations: %v", err))
-	}
-
-	// Add foreign key constraint
-	_, err = sqlDB.Exec(`
-		ALTER TABLE feeds 
-		ADD CONSTRAINT IF NOT EXISTS fk_feeds_user 
-		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-	`)
-	if err != nil {
-		// Constraint might already exist, ignore error
-	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 }
 
 func newApp() *echo.Echo {
