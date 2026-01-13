@@ -1,20 +1,22 @@
 package episode
 
 import (
+	"database/sql"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 	"math/rand"
 	"os"
-	"pcast-api/db"
-	"pcast-api/helper"
 	"strconv"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"pcast-api/db"
 )
 
-var d *gorm.DB
+var d *sql.DB
 var es *Store
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
 	setup()
@@ -27,16 +29,46 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDB("./../../fixtures/test/pcast.db")
+	d = db.NewTestDBSQL(testDSN)
+
+	// Run migrations
+	runMigrations()
+
 	es = New(d)
 }
 
 func tearDown() {
-	helper.RemoveTable(d, &Episode{})
+	// Clean up test data
+	truncateTable()
+	d.Close()
+}
+
+func runMigrations() {
+	// Create episodes table if not exists
+	_, err := d.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
+		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("failed to run migrations: %v", err))
+	}
 }
 
 func truncateTable() {
-	helper.TruncateTables(d, "episodes")
+	_, err := d.Exec("TRUNCATE TABLE episodes")
+	if err != nil {
+		// Table might not exist yet, ignore error
+		return
+	}
 }
 
 func newEpisode() *Episode {
