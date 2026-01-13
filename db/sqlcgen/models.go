@@ -20,3 +20,13 @@ type Episode struct {
 	CurrentPosition sql.NullInt32 `json:"current_position"`
 	Played          bool          `json:"played"`
 }
+
+type Feed struct {
+	ID        uuid.UUID    `json:"id"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	UserID    uuid.UUID    `json:"user_id"`
+	Title     string       `json:"title"`
+	Url       string       `json:"url"`
+	SyncedAt  sql.NullTime `json:"synced_at"`
+}

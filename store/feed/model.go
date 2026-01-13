@@ -2,24 +2,36 @@ package feed
 
 import (
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"time"
 )
 
 type Feed struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	UserID    uuid.UUID `gorm:"type:uuid"`
+	UserID    uuid.UUID
 	Title     string
 	URL       string
 	SyncedAt  *time.Time
 }
 
-func (f *Feed) BeforeCreate(_ *gorm.DB) (err error) {
-	f.ID, err = uuid.NewV7()
-	if err != nil {
-		return err
+// BeforeCreate sets default values before creating a feed
+// Call this explicitly in Store.Create()
+func (f *Feed) BeforeCreate() error {
+	if f.ID == uuid.Nil {
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		f.ID = id
+	}
+
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = time.Now()
+	}
+
+	if f.UpdatedAt.IsZero() {
+		f.UpdatedAt = time.Now()
 	}
 
 	return nil
