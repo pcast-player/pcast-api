@@ -4,17 +4,22 @@ This guide provides essential information for AI coding agents working in this r
 
 ## Project Overview
 
-PCast API is a podcast player backend written in Go 1.22+ using the Echo framework, GORM ORM, and SQLite/PostgreSQL databases. The codebase follows a clean 3-layer architecture: Controller → Service → Store.
+PCast API is a podcast player backend written in Go 1.22+ using the Echo framework, sqlc for type-safe SQL, and PostgreSQL database. The codebase follows a clean 3-layer architecture: Controller → Service → Store.
 
 ## Quick Reference
 
 ```bash
 # Common commands
-make install         # Install dependencies & swag tool
+make install         # Install dependencies, swag, goose, sqlc
 make build           # Build with race detector
 make run             # Run the API server
 make test            # Run all tests with race detector
 make create-docs     # Generate Swagger documentation
+
+# Database migrations
+make migrate-up      # Run database migrations
+make migrate-status  # Check migration status
+make sqlc-generate   # Generate sqlc code
 
 # Run a single test
 go test -v -race ./service/user -run TestService_GetUser
@@ -27,9 +32,14 @@ go test -v -race -cover ./...
 
 ### Installation
 ```bash
-make install          # Download dependencies and install swag tool
+make install          # Download dependencies and install tools (swag, goose, sqlc)
 go mod download       # Download dependencies only
 ```
+
+**Required Tools:**
+- `swag` - Swagger documentation generator
+- `goose` - Database migration tool
+- `sqlc` - Type-safe SQL code generator
 
 ### Building
 ```bash
@@ -70,6 +80,27 @@ go test -v -race ./store/feed -run TestStore_Create
 make create-docs     # Generate Swagger docs with swag init
 ```
 
+### Database Migrations
+```bash
+# Run migrations
+make migrate-up          # Apply all pending migrations
+make migrate-down        # Rollback last migration
+make migrate-status      # Check migration status
+
+# Create new migration
+make migrate-create name=add_new_feature
+
+# Test database migrations
+make test-migrate-up     # Apply migrations to test database
+make test-migrate-down   # Rollback test database migrations
+```
+
+### Generate sqlc Code
+```bash
+make sqlc-generate    # Generate type-safe Go code from SQL queries
+sqlc generate         # Alternative: run directly
+```
+
 ## Project Structure
 
 ```
@@ -83,9 +114,12 @@ pcast-api/
 ├── store/               # Data access layer
 │   └── {domain}/           # model.go, store.go, store_test.go
 ├── router/              # Echo router setup
-├── db/                  # Database connection
+├── db/                  # Database connection & sqlc generated code
+│   ├── migrations/         # Goose SQL migrations
+│   ├── queries/            # sqlc SQL query definitions
+│   ├── sqlcgen/            # Generated sqlc code (DO NOT EDIT)
+│   └── db.go               # Database connection setup
 ├── config/              # TOML configuration
-├── helper/              # Test utilities
 └── integration_test/    # Full-stack API tests
 ```
 
@@ -148,18 +182,35 @@ import (
 **Models (Store Layer):**
 ```go
 type Feed struct {
-    ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
+    ID        uuid.UUID
     CreatedAt time.Time
     UpdatedAt time.Time
-    UserID    uuid.UUID `gorm:"type:uuid"`
+    UserID    uuid.UUID
     Title     string
     URL       string
     SyncedAt  *time.Time  // Use pointer for nullable fields
 }
 
-func (f *Feed) BeforeCreate(_ *gorm.DB) (err error) {
-    f.ID, err = uuid.NewV7()  // Always use UUID v7
-    return err
+// BeforeCreate sets default values before creating a feed
+// Call this explicitly in Store.Create()
+func (f *Feed) BeforeCreate() error {
+    if f.ID == uuid.Nil {
+        id, err := uuid.NewV7()  // Always use UUID v7
+        if err != nil {
+            return err
+        }
+        f.ID = id
+    }
+    
+    if f.CreatedAt.IsZero() {
+        f.CreatedAt = time.Now()
+    }
+    
+    if f.UpdatedAt.IsZero() {
+        f.UpdatedAt = time.Now()
+    }
+    
+    return nil
 }
 ```
 
@@ -315,11 +366,13 @@ func TestService_GetUser(t *testing.T) {
 
 ### Store Tests
 
-Use `TestMain` for setup/teardown with SQLite:
+Use `TestMain` for setup/teardown with PostgreSQL:
 
 ```go
-var d *gorm.DB
+var d *sql.DB
 var fs *Store
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
     setup()
@@ -329,20 +382,41 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-    d = db.NewTestDB("./../../fixtures/test/store_feed.db")
+    d = db.NewTestDB(testDSN)
+    runMigrations()
     fs = New(d)
 }
 
 func tearDown() {
-    helper.RemoveTable(d, &Feed{})
+    truncateTable()
+    d.Close()
+}
+
+func runMigrations() {
+    _, err := d.Exec(`
+        CREATE TABLE IF NOT EXISTS feeds (
+            id UUID PRIMARY KEY,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            user_id UUID NOT NULL,
+            title VARCHAR(500) NOT NULL,
+            url VARCHAR(1000) NOT NULL,
+            synced_at TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id);
+    `)
+    if err != nil {
+        panic(fmt.Sprintf("failed to run migrations: %v", err))
+    }
 }
 
 func truncateTable() {
-    helper.TruncateTables(d, "feeds")
+    d.Exec("TRUNCATE TABLE feeds")
 }
 
 func TestCreateFeed(t *testing.T) {
-    feed := &Feed{URL: "https://example.com"}
+    userID, _ := uuid.NewV7()
+    feed := &Feed{URL: "https://example.com", Title: "Example", UserID: userID}
     err := fs.Create(feed)
     assert.NoError(t, err)
     
@@ -351,29 +425,32 @@ func TestCreateFeed(t *testing.T) {
 ```
 
 **Store test patterns:**
-- Test database files: `./../../fixtures/test/{package_name}.db`
+- All tests use PostgreSQL (`pcast_test` database)
 - Call `truncateTable()` after each test to clean data
-- Use `helper.TruncateTables(db, "table_name")` for cleanup
-- Use `helper.RemoveTable(db, &Model{})` in teardown
+- Use direct SQL `TRUNCATE TABLE` for cleanup
+- `runMigrations()` creates tables in setup
 
 ### Integration Tests
 
 Use `apitest` library for full HTTP testing:
 
 ```go
-var d *gorm.DB
+var sqlDB *sql.DB
+
+const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
 func TestMain(m *testing.M) {
-    d = db.NewTestDB("./../../fixtures/test/integration_feed.db")
+    sqlDB = db.NewTestDB(testDSN)
     code := m.Run()
-    helper.RemoveTable(d, &feedStore.Feed{})
-    helper.RemoveTable(d, &userStore.User{})
+    sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+    sqlDB.Exec("TRUNCATE TABLE feeds CASCADE")
+    sqlDB.Close()
     os.Exit(code)
 }
 
 func truncateTables() {
-    helper.TruncateTables(d, "feeds")
-    helper.TruncateTables(d, "users")
+    sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+    sqlDB.Exec("TRUNCATE TABLE feeds")
 }
 
 func createUser(t *testing.T) uuid.UUID {
@@ -407,9 +484,10 @@ func TestCreateFeed(t *testing.T) {
 ```
 
 **Integration test patterns:**
-- Test database files: `./../../fixtures/test/integration_{domain}.db`
+- All tests use PostgreSQL (`pcast_test` database)
 - Use `apitest` for HTTP testing and `apitest-jsonpath` for assertions
 - Call `truncateTables()` after each test
+- Use CASCADE for truncate to handle foreign keys
 - Helper functions like `createUser()` for test data setup
 
 ## Additional Notes
@@ -417,20 +495,22 @@ func TestCreateFeed(t *testing.T) {
 - **UUID v7**: Always use `uuid.NewV7()` for ID generation (not v4)
 - **Password Hashing**: Use `argon2id.CreateHash()` and `argon2id.ComparePasswordAndHash()`
 - **Functional Utils**: Use `samber/lo` for Map, Filter, etc.
-- **Database**: GORM with AutoMigrate in store constructors
+- **Database**: sqlc for type-safe SQL queries with PostgreSQL
+- **Migrations**: Goose for SQL migrations in `db/migrations/`
 - **Auth**: Currently simple UUID in Authorization header (no JWT middleware yet)
 - **Config**: TOML-based configuration in `config.toml`
 - **Validation**: Custom validator using `go-playground/validator` configured in router
 - **Service Layer**: Often thin pass-through layer coordinating between controllers and stores
-- **Test Helpers**: `helper` package provides `TruncateTables()` and `RemoveTable()` utilities
+- **sqlc Generated Code**: Located in `db/sqlcgen/` (DO NOT manually edit)
 - **Ignored Files**: `.gitignore` excludes `*.db`, `target/`, and `.idea/`
 
 ## File Organization
 
-### Test Database Files
-- Store tests: `./../../fixtures/test/store_{domain}.db`
-- Integration tests: `./../../fixtures/test/integration_{domain}.db`
-- All `.db` files are gitignored
+### Test Database
+- All tests use PostgreSQL (`pcast_test` database)
+- Tests connect via: `host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable`
+- Use docker-compose to start Postgres: `cd docker && docker-compose up -d db`
+- Create test database: `docker exec pcast-api-db-1 psql -U pcast -c "CREATE DATABASE pcast_test;"`
 
 ### Domain Structure
 Each domain (user, feed, episode) follows the same pattern:
@@ -445,9 +525,71 @@ service/{domain}/
   service_test.go     # Unit tests with mocks
 
 store/{domain}/
-  model.go            # GORM model with BeforeCreate hook
-  store.go            # Data access methods
-  store_test.go       # Store tests with SQLite
+  model.go            # Domain model with BeforeCreate() method
+  store.go            # Data access methods using sqlc
+  store_test.go       # Store tests with PostgreSQL
+
+db/
+  migrations/         # Goose SQL migration files
+  queries/            # sqlc SQL query definitions
+  sqlcgen/            # Generated sqlc code (DO NOT EDIT)
+```
+
+## Working with sqlc
+
+### Adding New Queries
+1. Write SQL in `db/queries/{domain}.sql` with sqlc annotations
+2. Run `make sqlc-generate` to generate Go code
+3. Use generated code in store layer
+
+**Example query:**
+```sql
+-- name: FindUserByEmail :one
+SELECT * FROM users WHERE email = $1;
+```
+
+**Generated usage:**
+```go
+user, err := s.queries.FindUserByEmail(context.Background(), email)
+```
+
+### Creating Migrations
+```bash
+# Create new migration
+make migrate-create name=add_user_avatar
+
+# Edit the generated SQL file in db/migrations/
+# Run migration
+make migrate-up
+```
+
+### Store Layer Pattern with sqlc
+```go
+type Store struct {
+    db      *sql.DB
+    queries *sqlcgen.Queries
+}
+
+func New(database *sql.DB) *Store {
+    return &Store{
+        db:      database,
+        queries: sqlcgen.New(database),
+    }
+}
+
+func (s *Store) Create(feed *Feed) error {
+    if err := feed.BeforeCreate(); err != nil {
+        return err
+    }
+    
+    _, err := s.queries.CreateFeed(context.Background(), sqlcgen.CreateFeedParams{
+        ID:        feed.ID,
+        CreatedAt: feed.CreatedAt,
+        // ... other fields
+    })
+    
+    return err
+}
 ```
 
 ## Common Pitfalls
@@ -455,8 +597,11 @@ store/{domain}/
 - Don't forget blank lines between import groups
 - Always use pointer receivers for struct methods
 - Use pointer types for nullable database fields
-- Call `truncateTable()` or `truncateTables()` after each test
+- Call `truncateTable()` after each test to clean data
 - Enable race detector in tests: `-race` flag
 - Don't forget to regenerate Swagger docs after API changes: `make create-docs`
-- Test database paths use `./../../fixtures/test/` relative to test file location
 - Import domain stores with appropriate aliases to avoid conflicts
+- **sqlc**: Don't manually edit files in `db/sqlcgen/` - always regenerate
+- **Migrations**: Always create both Up and Down migrations
+- **NULL handling**: Use sql.NullTime, sql.NullInt32, etc. for nullable fields
+- Call `BeforeCreate()` explicitly in Store.Create() before inserting

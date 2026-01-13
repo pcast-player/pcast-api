@@ -21,7 +21,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U pcast -d pcast_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -37,6 +37,14 @@ jobs:
 
       - name: Get dependencies
         run: go mod download
+
+      - name: Install goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Run migrations
+        run: |
+          cd db/migrations
+          goose postgres "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable" up
 
       - name: Run tests
         run: go test -v -race -p 1 ./...

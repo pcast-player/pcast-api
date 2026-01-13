@@ -2,8 +2,10 @@ package feed
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	d = db.NewTestDBSQL(testDSN)
+	d = db.NewTestDB(testDSN)
 
 	// Run migrations
 	runMigrations()
@@ -41,12 +43,21 @@ func tearDown() {
 }
 
 func runMigrations() {
-	// Create all tables in order - split statements to avoid race conditions
+	// NOTE: In CI, goose migrations are run before tests.
+	// These CREATE TABLE statements exist to support local runs.
+	// Keep users table available so FK constraints won't fail.
 
-	// Drop FK constraint if exists (for isolated testing)
-	d.Exec(`ALTER TABLE IF EXISTS feeds DROP CONSTRAINT IF EXISTS fk_feeds_user`)
+	d.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			email VARCHAR(255) UNIQUE NOT NULL,
+			password VARCHAR(255) NOT NULL
+		)
+	`)
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 
-	// Create episodes table first (from migration 00001)
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
@@ -61,20 +72,6 @@ func runMigrations() {
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 
-	// Create users table (for completeness)
-	d.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-			id UUID PRIMARY KEY,
-			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			email VARCHAR(255) UNIQUE NOT NULL,
-			password VARCHAR(255) NOT NULL
-		)
-	`)
-	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
-
-	// Create feeds table (from migration 00002)
-	// Note: NOT adding FK constraint to allow isolated testing
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,
@@ -90,15 +87,31 @@ func runMigrations() {
 }
 
 func truncateTable() {
-	_, err := d.Exec("TRUNCATE TABLE feeds")
-	if err != nil {
-		// Table might not exist yet, ignore error
-		return
-	}
+	// If FK exists (feeds.user_id -> users.id), truncate users CASCADE clears feeds.
+	// Also explicitly truncate feeds for local runs without FK.
+	d.Exec("TRUNCATE TABLE feeds")
+	d.Exec("TRUNCATE TABLE users CASCADE")
+}
+
+func ensureUserExists(t *testing.T, userID uuid.UUID) {
+	email := fmt.Sprintf("user-%s@example.com", userID.String())
+	now := time.Now()
+
+	_, err := d.Exec(
+		"INSERT INTO users (id, created_at, updated_at, email, password) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
+		userID,
+		now,
+		now,
+		email,
+		"test",
+	)
+	assert.NoError(t, err)
 }
 
 func TestCreateFeed(t *testing.T) {
 	userID, _ := uuid.NewV7()
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
@@ -108,12 +121,13 @@ func TestCreateFeed(t *testing.T) {
 
 func TestFindFeedByID(t *testing.T) {
 	userID, _ := uuid.NewV7()
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
 
 	foundFeed, err := fs.FindByID(feed.ID)
-
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
@@ -123,6 +137,8 @@ func TestFindFeedByID(t *testing.T) {
 func TestStore_FindByUserID(t *testing.T) {
 	userID, err := uuid.NewV7()
 	assert.NoError(t, err)
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err = fs.Create(feed)
 	assert.NoError(t, err)
@@ -137,6 +153,8 @@ func TestStore_FindByUserID(t *testing.T) {
 func TestStore_FindByIdAndUserID(t *testing.T) {
 	userID, err := uuid.NewV7()
 	assert.NoError(t, err)
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err = fs.Create(feed)
 	assert.NoError(t, err)
@@ -150,6 +168,8 @@ func TestStore_FindByIdAndUserID(t *testing.T) {
 
 func TestDeleteFeed(t *testing.T) {
 	userID, _ := uuid.NewV7()
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)
@@ -162,6 +182,8 @@ func TestDeleteFeed(t *testing.T) {
 
 func TestUpdateFeed(t *testing.T) {
 	userID, _ := uuid.NewV7()
+	ensureUserExists(t, userID)
+
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
 	err := fs.Create(feed)
 	assert.NoError(t, err)

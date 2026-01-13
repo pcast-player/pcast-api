@@ -14,22 +14,54 @@ So I decided to build my own podcast player. The API is written in Go Lang. The 
 
 ## How?
 
-The API uses the Echo Framework and SQLite as database (for now).
+The API uses the Echo Framework, sqlc for type-safe SQL, and PostgreSQL as database.
 
 ### Installation
 
-Check out the repository and install the dependencies with go mod:
+1. Check out the repository and install the dependencies:
 
 ```bash
-go mod download
+make install
+```
+
+This will:
+- Download Go dependencies
+- Install swag (Swagger documentation generator)
+- Install goose (database migration tool)
+- Install sqlc (type-safe SQL code generator)
+
+2. Start PostgreSQL using docker-compose:
+
+```bash
+cd docker
+docker-compose up -d db
+```
+
+3. Create the database:
+
+```bash
+docker exec pcast-api-db-1 psql -U pcast -c "CREATE DATABASE pcast;"
+docker exec pcast-api-db-1 psql -U pcast -c "CREATE DATABASE pcast_test;"
+```
+
+4. Run database migrations:
+
+```bash
+make migrate-up
 ```
 
 ### Running
 
-Just run the main.go file:
+Run the API server:
 
 ```bash
-go run main.go
+make run
+```
+
+Or directly:
+
+```bash
+go run -race .
 ```
 
 The API will be available at http://localhost:8080.
@@ -38,6 +70,51 @@ There is also an API documentation available at http://localhost:8080/swagger/.
 
 ### Testing
 
+Run all tests:
+
 ```bash
-go fixtures ./...
+make test
+```
+
+Or with coverage:
+
+```bash
+go test -v -race -cover ./...
+```
+
+Run tests for a specific package:
+
+```bash
+go test -v -race ./store/user
+go test -v -race ./integration_test/feed
+```
+
+Run a single test:
+
+```bash
+go test -v -race ./service/user -run TestService_GetUser
+```
+
+### Database Migrations
+
+Create a new migration:
+
+```bash
+make migrate-create name=add_new_feature
+```
+
+Run migrations:
+
+```bash
+make migrate-up       # Apply all pending migrations
+make migrate-down     # Rollback last migration
+make migrate-status   # Check migration status
+```
+
+### Code Generation
+
+After modifying SQL queries in `db/queries/`, regenerate the Go code:
+
+```bash
+make sqlc-generate
 ```
