@@ -45,8 +45,8 @@ func tearDown() {
 func runMigrations() {
 	// NOTE: In CI, goose migrations are run before tests.
 	// These CREATE TABLE statements exist to support local runs.
+	// Keep users table available so FK constraints won't fail.
 
-	// Users table (needed for FK constraints in CI)
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
@@ -58,7 +58,6 @@ func runMigrations() {
 	`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 
-	// Episodes table (migration 00001)
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
@@ -73,7 +72,6 @@ func runMigrations() {
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 
-	// Feeds table (migration 00002)
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,

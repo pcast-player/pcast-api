@@ -27,20 +27,20 @@ const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast
 func TestMain(m *testing.M) {
 	sqlDB = db.NewTestDB(testDSN)
 
-	// Clean up any leftover data from previous runs
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS users CASCADE")
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS feeds CASCADE")
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS episodes CASCADE")
+	// Clean up any leftover data from previous runs (ignore errors)
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Exec("TRUNCATE TABLE feeds")
+	sqlDB.Exec("TRUNCATE TABLE episodes")
 
 	// Run migrations to create tables
 	runMigrations()
 
 	code := m.Run()
 
-	// Clean up
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS users CASCADE")
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS feeds CASCADE")
-	sqlDB.Exec("TRUNCATE TABLE IF EXISTS episodes CASCADE")
+	// Clean up (ignore errors)
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Exec("TRUNCATE TABLE feeds")
+	sqlDB.Exec("TRUNCATE TABLE episodes")
 	sqlDB.Close()
 
 	os.Exit(code)

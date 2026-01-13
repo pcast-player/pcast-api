@@ -21,7 +21,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U pcast -d pcast_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -47,4 +47,4 @@ jobs:
           goose postgres "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable" up
 
       - name: Run tests
-        run: go test -v -race ./...
+        run: go test -v -race -p 1 ./...

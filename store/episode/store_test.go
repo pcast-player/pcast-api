@@ -45,7 +45,8 @@ func tearDown() {
 
 func runMigrations() {
 	// Create episodes table if not exists
-	_, err := d.Exec(`
+	// Split statements to avoid race conditions in parallel tests
+	d.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -54,13 +55,10 @@ func runMigrations() {
 			feed_guid VARCHAR(255) NOT NULL,
 			current_position INTEGER,
 			played BOOLEAN NOT NULL DEFAULT FALSE
-		);
-		CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id);
-		CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid);
+		)
 	`)
-	if err != nil {
-		panic(fmt.Sprintf("failed to run migrations: %v", err))
-	}
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 }
 
 func truncateTable() {

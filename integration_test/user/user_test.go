@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -23,13 +24,77 @@ const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast
 func TestMain(m *testing.M) {
 	sqlDB = db.NewTestDB(testDSN)
 
+	// Clean up any leftover data from previous runs (ignore errors)
+	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Exec("TRUNCATE TABLE feeds")
+	sqlDB.Exec("TRUNCATE TABLE episodes")
+
+	// Run migrations to create tables
+	runMigrations()
+
 	code := m.Run()
 
-	// Clean up
+	// Clean up (ignore errors)
 	sqlDB.Exec("TRUNCATE TABLE users CASCADE")
+	sqlDB.Exec("TRUNCATE TABLE feeds")
+	sqlDB.Exec("TRUNCATE TABLE episodes")
 	sqlDB.Close()
 
 	os.Exit(code)
+}
+
+func runMigrations() {
+	// Create all tables in order - split statements to avoid race conditions
+
+	// Create episodes table (from migration 00001)
+	_, err := sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS episodes (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			feed_id UUID NOT NULL,
+			feed_guid VARCHAR(255) NOT NULL,
+			current_position INTEGER,
+			played BOOLEAN NOT NULL DEFAULT FALSE
+		)
+	`)
+	if err != nil {
+		fmt.Printf("Warning: episodes table creation: %v\n", err)
+	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
+
+	// Create feeds table (from migration 00002)
+	_, err = sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS feeds (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			user_id UUID NOT NULL,
+			title VARCHAR(500) NOT NULL,
+			url VARCHAR(1000) NOT NULL,
+			synced_at TIMESTAMP
+		)
+	`)
+	if err != nil {
+		fmt.Printf("Warning: feeds table creation: %v\n", err)
+	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id)`)
+
+	// Create users table (from migration 00003)
+	_, err = sqlDB.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY,
+			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			email VARCHAR(255) UNIQUE NOT NULL,
+			password VARCHAR(255) NOT NULL
+		)
+	`)
+	if err != nil {
+		panic(fmt.Sprintf("CRITICAL: failed to create users table: %v", err))
+	}
+	sqlDB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 }
 
 func unmarshal[M any](t *testing.T, result *apitest.Result) *M {
