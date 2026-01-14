@@ -96,6 +96,7 @@ func (s *Store) Delete(ctx context.Context, episode *Episode) error {
 }
 
 // Helper functions to convert between *int and sql.NullInt32
+// Helper functions to convert between *int and sql.NullInt32
 func intPtrToNullInt32(i *int) sql.NullInt32 {
 	if i == nil {
 		return sql.NullInt32{Valid: false}

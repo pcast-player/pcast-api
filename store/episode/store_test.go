@@ -88,11 +88,15 @@ func TestCreateEpisode(t *testing.T) {
 func TestFindEpisodeByID(t *testing.T) {
 	episode := newEpisode()
 	err := es.Create(context.Background(), episode)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
 	foundEpisode, err := es.FindByID(context.Background(), episode.ID)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
-	assert.NoError(t, err)
 	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
 
 	truncateTable()
