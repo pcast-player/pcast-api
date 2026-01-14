@@ -42,7 +42,7 @@ func (h *Handler) registerUser(c echo.Context) error {
 
 	ud := model.User{Email: userRequest.Email, Password: hash}
 
-	err = h.service.CreateUser(&ud)
+	err = h.service.CreateUser(c.Request().Context(), &ud)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -77,7 +77,7 @@ func (h *Handler) updatePassword(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.service.GetUser(uid)
+	user, err := h.service.GetUser(c.Request().Context(), uid)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 
@@ -98,7 +98,7 @@ func (h *Handler) updatePassword(c echo.Context) error {
 
 	user.Password = hash
 
-	err = h.service.UpdateUser(user)
+	err = h.service.UpdateUser(c.Request().Context(), user)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}

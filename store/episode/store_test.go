@@ -1,6 +1,7 @@
 package episode
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"math/rand"
@@ -78,7 +79,7 @@ func newEpisode() *Episode {
 
 func TestCreateEpisode(t *testing.T) {
 	episode := newEpisode()
-	err := es.Create(episode)
+	err := es.Create(context.Background(), episode)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -86,10 +87,10 @@ func TestCreateEpisode(t *testing.T) {
 
 func TestFindEpisodeByID(t *testing.T) {
 	episode := newEpisode()
-	err := es.Create(episode)
+	err := es.Create(context.Background(), episode)
 	assert.NoError(t, err)
 
-	foundEpisode, err := es.FindByID(episode.ID)
+	foundEpisode, err := es.FindByID(context.Background(), episode.ID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
@@ -99,10 +100,10 @@ func TestFindEpisodeByID(t *testing.T) {
 
 func TestDeleteEpisode(t *testing.T) {
 	episode := newEpisode()
-	err := es.Create(episode)
+	err := es.Create(context.Background(), episode)
 	assert.NoError(t, err)
 
-	err = es.Delete(episode)
+	err = es.Delete(context.Background(), episode)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -110,14 +111,14 @@ func TestDeleteEpisode(t *testing.T) {
 
 func TestUpdateEpisode(t *testing.T) {
 	episode := newEpisode()
-	err := es.Create(episode)
+	err := es.Create(context.Background(), episode)
 	assert.NoError(t, err)
 
 	episode.FeedId, _ = uuid.NewV7()
-	err = es.Update(episode)
+	err = es.Update(context.Background(), episode)
 	assert.NoError(t, err)
 
-	foundEpisode, err := es.FindByID(episode.ID)
+	foundEpisode, err := es.FindByID(context.Background(), episode.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
 

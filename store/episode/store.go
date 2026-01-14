@@ -21,8 +21,8 @@ func New(database *sql.DB) *Store {
 	}
 }
 
-func (s *Store) FindAll() ([]Episode, error) {
-	rows, err := s.queries.FindAllEpisodes(context.Background())
+func (s *Store) FindAll(ctx context.Context) ([]Episode, error) {
+	rows, err := s.queries.FindAllEpisodes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,8 @@ func (s *Store) FindAll() ([]Episode, error) {
 	return episodes, nil
 }
 
-func (s *Store) FindByID(id uuid.UUID) (*Episode, error) {
-	row, err := s.queries.FindEpisodeByID(context.Background(), id)
+func (s *Store) FindByID(ctx context.Context, id uuid.UUID) (*Episode, error) {
+	row, err := s.queries.FindEpisodeByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +60,12 @@ func (s *Store) FindByID(id uuid.UUID) (*Episode, error) {
 	}, nil
 }
 
-func (s *Store) Create(episode *Episode) error {
+func (s *Store) Create(ctx context.Context, episode *Episode) error {
 	if err := episode.BeforeCreate(); err != nil {
 		return err
 	}
 
-	_, err := s.queries.CreateEpisode(context.Background(), sqlcgen.CreateEpisodeParams{
+	_, err := s.queries.CreateEpisode(ctx, sqlcgen.CreateEpisodeParams{
 		ID:              episode.ID,
 		CreatedAt:       episode.CreatedAt,
 		UpdatedAt:       episode.UpdatedAt,
@@ -78,10 +78,10 @@ func (s *Store) Create(episode *Episode) error {
 	return err
 }
 
-func (s *Store) Update(episode *Episode) error {
+func (s *Store) Update(ctx context.Context, episode *Episode) error {
 	episode.UpdatedAt = time.Now()
 
-	return s.queries.UpdateEpisode(context.Background(), sqlcgen.UpdateEpisodeParams{
+	return s.queries.UpdateEpisode(ctx, sqlcgen.UpdateEpisodeParams{
 		ID:              episode.ID,
 		UpdatedAt:       episode.UpdatedAt,
 		FeedID:          episode.FeedId,
@@ -91,10 +91,11 @@ func (s *Store) Update(episode *Episode) error {
 	})
 }
 
-func (s *Store) Delete(episode *Episode) error {
-	return s.queries.DeleteEpisode(context.Background(), episode.ID)
+func (s *Store) Delete(ctx context.Context, episode *Episode) error {
+	return s.queries.DeleteEpisode(ctx, episode.ID)
 }
 
+// Helper functions to convert between *int and sql.NullInt32
 // Helper functions to convert between *int and sql.NullInt32
 func intPtrToNullInt32(i *int) sql.NullInt32 {
 	if i == nil {

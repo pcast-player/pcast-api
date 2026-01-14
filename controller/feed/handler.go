@@ -30,7 +30,7 @@ func (f *Handler) GetFeeds(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusUnauthorized)
 	}
-	feeds, err := f.service.GetFeedsByUserID(userID)
+	feeds, err := f.service.GetFeedsByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -67,7 +67,7 @@ func (f *Handler) CreateFeed(c echo.Context) error {
 
 	fd := model.Feed{UserID: userID, URL: r.URL, Title: r.Title, SyncedAt: nil}
 
-	err = f.service.CreateFeed(&fd)
+	err = f.service.CreateFeed(c.Request().Context(), &fd)
 	if err != nil {
 		println("store error", err.Error())
 		return c.NoContent(http.StatusBadRequest)
@@ -96,7 +96,7 @@ func (f *Handler) DeleteFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	if err = f.service.DeleteFeed(userID, UUID); err != nil {
+	if err = f.service.DeleteFeed(c.Request().Context(), userID, UUID); err != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -121,7 +121,7 @@ func (f *Handler) SyncFeed(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	err = f.service.SyncFeed(userID, feedId)
+	err = f.service.SyncFeed(c.Request().Context(), userID, feedId)
 	if err != nil {
 		return c.NoContent(http.StatusNotFound)
 	}
