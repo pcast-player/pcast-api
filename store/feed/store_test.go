@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -113,7 +114,7 @@ func TestCreateFeed(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err := fs.Create(feed)
+	err := fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -124,10 +125,10 @@ func TestFindFeedByID(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err := fs.Create(feed)
+	err := fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
-	foundFeed, err := fs.FindByID(feed.ID)
+	foundFeed, err := fs.FindByID(context.Background(), feed.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
@@ -140,10 +141,10 @@ func TestStore_FindByUserID(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err = fs.Create(feed)
+	err = fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
-	foundFeeds, err := fs.FindByUserID(userID)
+	foundFeeds, err := fs.FindByUserID(context.Background(), userID)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, foundFeeds)
 
@@ -156,10 +157,10 @@ func TestStore_FindByIdAndUserID(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err = fs.Create(feed)
+	err = fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
-	foundFeed, err := fs.FindByIdAndUserID(feed.ID, userID)
+	foundFeed, err := fs.FindByIdAndUserID(context.Background(), feed.ID, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 
@@ -171,10 +172,10 @@ func TestDeleteFeed(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err := fs.Create(feed)
+	err := fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
-	err = fs.Delete(feed)
+	err = fs.Delete(context.Background(), feed)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -185,14 +186,14 @@ func TestUpdateFeed(t *testing.T) {
 	ensureUserExists(t, userID)
 
 	feed := &Feed{URL: "https://example.com", Title: "Example Feed", UserID: userID}
-	err := fs.Create(feed)
+	err := fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
 	feed.URL = "https://example.com/updated"
-	err = fs.Update(feed)
+	err = fs.Update(context.Background(), feed)
 	assert.NoError(t, err)
 
-	foundFeed, err := fs.FindByID(feed.ID)
+	foundFeed, err := fs.FindByID(context.Background(), feed.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 

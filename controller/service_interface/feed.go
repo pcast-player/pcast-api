@@ -1,15 +1,16 @@
 package service_interface
 
 import (
+	"context"
 	"github.com/google/uuid"
 	store "pcast-api/store/feed"
 )
 
 type Feed interface {
-	GetFeed(id uuid.UUID) (*store.Feed, error)
-	GetFeeds(userID uuid.UUID) ([]store.Feed, error)
-	CreateFeed(feed *store.Feed) error
-	DeleteFeed(userID uuid.UUID, id uuid.UUID) error
-	SyncFeed(userID uuid.UUID, id uuid.UUID) error
-	GetFeedsByUserID(userID uuid.UUID) ([]store.Feed, error)
+	GetFeed(ctx context.Context, id uuid.UUID) (*store.Feed, error)
+	GetFeeds(ctx context.Context, userID uuid.UUID) ([]store.Feed, error)
+	CreateFeed(ctx context.Context, feed *store.Feed) error
+	DeleteFeed(ctx context.Context, userID uuid.UUID, id uuid.UUID) error
+	SyncFeed(ctx context.Context, userID uuid.UUID, id uuid.UUID) error
+	GetFeedsByUserID(ctx context.Context, userID uuid.UUID) ([]store.Feed, error)
 }

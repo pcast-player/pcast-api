@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/alexedwards/argon2id"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -42,7 +43,7 @@ func (h *Handler) registerUser(c echo.Context) error {
 
 	ud := model.User{Email: userRequest.Email, Password: hash}
 
-	err = h.service.CreateUser(&ud)
+	err = h.service.CreateUser(c.Request().Context(), &ud)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -50,6 +51,32 @@ func (h *Handler) registerUser(c echo.Context) error {
 	res := NewPresenter(&ud)
 
 	return c.JSON(http.StatusCreated, res)
+}
+
+// LoginUser godoc
+// @Summary Login user
+// @Description Login user with the data provided in the request
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param user body LoginRequest true "LoginRequest data"
+// @Success 200 {object} LoginResponse
+// @Router /user/login [post]
+func (h *Handler) loginUser(c echo.Context) error {
+	req := new(LoginRequest)
+	if err := c.Bind(req); err != nil {
+		return err
+	}
+	if err := c.Validate(req); err != nil {
+		return err
+	}
+
+	token, err := h.service.Login(c.Request().Context(), req.Email, req.Password)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, LoginResponse{Token: token})
 }
 
 // UpdatePassword godoc
@@ -63,8 +90,21 @@ func (h *Handler) registerUser(c echo.Context) error {
 // @Success 200
 // @Router /user/password [put]
 func (h *Handler) updatePassword(c echo.Context) error {
-	r := c.Request()
-	uid, err := uuid.Parse(r.Header.Get("Authorization"))
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	sub, err := claims.GetSubject()
+	if err != nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	uid, err := uuid.Parse(sub)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -77,7 +117,7 @@ func (h *Handler) updatePassword(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.service.GetUser(uid)
+	user, err := h.service.GetUser(c.Request().Context(), uid)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 
@@ -98,7 +138,7 @@ func (h *Handler) updatePassword(c echo.Context) error {
 
 	user.Password = hash
 
-	err = h.service.UpdateUser(user)
+	err = h.service.UpdateUser(c.Request().Context(), user)
 	if err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
@@ -107,7 +147,8 @@ func (h *Handler) updatePassword(c echo.Context) error {
 
 }
 
-func (h *Handler) Register(g *echo.Group) {
-	g.POST("/user/register", h.registerUser)
-	g.PUT("/user/password", h.updatePassword)
+func (h *Handler) Register(public *echo.Group, protected *echo.Group) {
+	public.POST("/user/register", h.registerUser)
+	public.POST("/user/login", h.loginUser)
+	protected.PUT("/user/password", h.updatePassword)
 }

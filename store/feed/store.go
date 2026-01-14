@@ -21,8 +21,8 @@ func New(database *sql.DB) *Store {
 	}
 }
 
-func (s *Store) FindAll() ([]Feed, error) {
-	rows, err := s.queries.FindAllFeeds(context.Background())
+func (s *Store) FindAll(ctx context.Context) ([]Feed, error) {
+	rows, err := s.queries.FindAllFeeds(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,38 +30,22 @@ func (s *Store) FindAll() ([]Feed, error) {
 	// Convert sqlc models to domain models
 	feeds := make([]Feed, len(rows))
 	for i, row := range rows {
-		feeds[i] = Feed{
-			ID:        row.ID,
-			CreatedAt: row.CreatedAt,
-			UpdatedAt: row.UpdatedAt,
-			UserID:    row.UserID,
-			Title:     row.Title,
-			URL:       row.Url,
-			SyncedAt:  nullTimeToTimePtr(row.SyncedAt),
-		}
+		feeds[i] = convertFeedRowToModel(*row)
 	}
 	return feeds, nil
 }
 
-func (s *Store) FindByID(id uuid.UUID) (*Feed, error) {
-	row, err := s.queries.FindFeedByID(context.Background(), id)
+func (s *Store) FindByID(ctx context.Context, id uuid.UUID) (*Feed, error) {
+	row, err := s.queries.FindFeedByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Feed{
-		ID:        row.ID,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-		UserID:    row.UserID,
-		Title:     row.Title,
-		URL:       row.Url,
-		SyncedAt:  nullTimeToTimePtr(row.SyncedAt),
-	}, nil
+	return convertFeedRowToModelPtr(*row), nil
 }
 
-func (s *Store) FindByUserID(userID uuid.UUID) ([]Feed, error) {
-	rows, err := s.queries.FindFeedsByUserID(context.Background(), userID)
+func (s *Store) FindByUserID(ctx context.Context, userID uuid.UUID) ([]Feed, error) {
+	rows, err := s.queries.FindFeedsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,21 +53,13 @@ func (s *Store) FindByUserID(userID uuid.UUID) ([]Feed, error) {
 	// Convert sqlc models to domain models
 	feeds := make([]Feed, len(rows))
 	for i, row := range rows {
-		feeds[i] = Feed{
-			ID:        row.ID,
-			CreatedAt: row.CreatedAt,
-			UpdatedAt: row.UpdatedAt,
-			UserID:    row.UserID,
-			Title:     row.Title,
-			URL:       row.Url,
-			SyncedAt:  nullTimeToTimePtr(row.SyncedAt),
-		}
+		feeds[i] = convertFeedRowToModel(*row)
 	}
 	return feeds, nil
 }
 
-func (s *Store) FindByIdAndUserID(id, userID uuid.UUID) (*Feed, error) {
-	row, err := s.queries.FindFeedByIDAndUserID(context.Background(), sqlcgen.FindFeedByIDAndUserIDParams{
+func (s *Store) FindByIdAndUserID(ctx context.Context, id, userID uuid.UUID) (*Feed, error) {
+	row, err := s.queries.FindFeedByIDAndUserID(ctx, sqlcgen.FindFeedByIDAndUserIDParams{
 		ID:     id,
 		UserID: userID,
 	})
@@ -102,12 +78,12 @@ func (s *Store) FindByIdAndUserID(id, userID uuid.UUID) (*Feed, error) {
 	}, nil
 }
 
-func (s *Store) Create(feed *Feed) error {
+func (s *Store) Create(ctx context.Context, feed *Feed) error {
 	if err := feed.BeforeCreate(); err != nil {
 		return err
 	}
 
-	_, err := s.queries.CreateFeed(context.Background(), sqlcgen.CreateFeedParams{
+	_, err := s.queries.CreateFeed(ctx, sqlcgen.CreateFeedParams{
 		ID:        feed.ID,
 		CreatedAt: feed.CreatedAt,
 		UpdatedAt: feed.UpdatedAt,
@@ -120,10 +96,10 @@ func (s *Store) Create(feed *Feed) error {
 	return err
 }
 
-func (s *Store) Update(feed *Feed) error {
+func (s *Store) Update(ctx context.Context, feed *Feed) error {
 	feed.UpdatedAt = time.Now()
 
-	return s.queries.UpdateFeed(context.Background(), sqlcgen.UpdateFeedParams{
+	return s.queries.UpdateFeed(ctx, sqlcgen.UpdateFeedParams{
 		ID:        feed.ID,
 		UpdatedAt: feed.UpdatedAt,
 		UserID:    feed.UserID,
@@ -133,8 +109,8 @@ func (s *Store) Update(feed *Feed) error {
 	})
 }
 
-func (s *Store) Delete(feed *Feed) error {
-	return s.queries.DeleteFeed(context.Background(), feed.ID)
+func (s *Store) Delete(ctx context.Context, feed *Feed) error {
+	return s.queries.DeleteFeed(ctx, feed.ID)
 }
 
 // Helper functions to convert between *time.Time and sql.NullTime
@@ -150,4 +126,23 @@ func nullTimeToTimePtr(nt sql.NullTime) *time.Time {
 		return nil
 	}
 	return &nt.Time
+}
+
+// Helper function to convert sqlcgen.Feed to Feed
+func convertFeedRowToModel(row sqlcgen.Feed) Feed {
+	return Feed{
+		ID:        row.ID,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+		UserID:    row.UserID,
+		Title:     row.Title,
+		URL:       row.Url,
+		SyncedAt:  nullTimeToTimePtr(row.SyncedAt),
+	}
+}
+
+// Helper function to convert sqlcgen.Feed to *Feed
+func convertFeedRowToModelPtr(row sqlcgen.Feed) *Feed {
+	feed := convertFeedRowToModel(row)
+	return &feed
 }

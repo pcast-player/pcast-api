@@ -21,8 +21,8 @@ func New(database *sql.DB) *Store {
 	}
 }
 
-func (s *Store) FindAll() ([]User, error) {
-	rows, err := s.queries.FindAllUsers(context.Background())
+func (s *Store) FindAll(ctx context.Context) ([]User, error) {
+	rows, err := s.queries.FindAllUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,56 +30,35 @@ func (s *Store) FindAll() ([]User, error) {
 	// Convert sqlc models to domain models
 	users := make([]User, len(rows))
 	for i, row := range rows {
-		users[i] = User{
-			ID:        row.ID,
-			CreatedAt: row.CreatedAt,
-			UpdatedAt: row.UpdatedAt,
-			Email:     row.Email,
-			Password:  row.Password,
-			Feeds:     nil, // Not loaded by default
-		}
+		users[i] = convertUserRowToModel(*row)
 	}
 	return users, nil
 }
 
-func (s *Store) FindByID(id uuid.UUID) (*User, error) {
-	row, err := s.queries.FindUserByID(context.Background(), id)
+func (s *Store) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
+	row, err := s.queries.FindUserByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &User{
-		ID:        row.ID,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-		Email:     row.Email,
-		Password:  row.Password,
-		Feeds:     nil, // Not loaded by default
-	}, nil
+	return convertUserRowToModelPtr(*row), nil
 }
 
-func (s *Store) FindByEmail(email string) (*User, error) {
-	row, err := s.queries.FindUserByEmail(context.Background(), email)
+func (s *Store) FindByEmail(ctx context.Context, email string) (*User, error) {
+	row, err := s.queries.FindUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
-	return &User{
-		ID:        row.ID,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-		Email:     row.Email,
-		Password:  row.Password,
-		Feeds:     nil, // Not loaded by default
-	}, nil
+	return convertUserRowToModelPtr(*row), nil
 }
 
-func (s *Store) Create(user *User) error {
+func (s *Store) Create(ctx context.Context, user *User) error {
 	if err := user.BeforeCreate(); err != nil {
 		return err
 	}
 
-	_, err := s.queries.CreateUser(context.Background(), sqlcgen.CreateUserParams{
+	_, err := s.queries.CreateUser(ctx, sqlcgen.CreateUserParams{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -90,10 +69,10 @@ func (s *Store) Create(user *User) error {
 	return err
 }
 
-func (s *Store) Update(user *User) error {
+func (s *Store) Update(ctx context.Context, user *User) error {
 	user.UpdatedAt = time.Now()
 
-	return s.queries.UpdateUser(context.Background(), sqlcgen.UpdateUserParams{
+	return s.queries.UpdateUser(ctx, sqlcgen.UpdateUserParams{
 		ID:        user.ID,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
@@ -101,6 +80,24 @@ func (s *Store) Update(user *User) error {
 	})
 }
 
-func (s *Store) Delete(user *User) error {
-	return s.queries.DeleteUser(context.Background(), user.ID)
+func (s *Store) Delete(ctx context.Context, user *User) error {
+	return s.queries.DeleteUser(ctx, user.ID)
+}
+
+// Helper function to convert sqlcgen.User to User
+func convertUserRowToModel(row sqlcgen.User) User {
+	return User{
+		ID:        row.ID,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+		Email:     row.Email,
+		Password:  row.Password,
+		Feeds:     nil, // Not loaded by default
+	}
+}
+
+// Helper function to convert sqlcgen.User to *User
+func convertUserRowToModelPtr(row sqlcgen.User) *User {
+	user := convertUserRowToModel(row)
+	return &user
 }

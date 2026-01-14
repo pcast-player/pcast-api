@@ -11,6 +11,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
+	"pcast-api/config"
 	"pcast-api/controller"
 	"pcast-api/controller/user"
 	"pcast-api/db"
@@ -117,7 +118,13 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	controller.NewController(nil, sqlDB, apiGroup)
+	cfg := &config.Config{
+		Auth: config.Auth{
+			JwtSecret: "testsecret",
+		},
+	}
+
+	controller.NewController(cfg, sqlDB, apiGroup)
 
 	return r
 }
@@ -139,7 +146,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestUpdatePassword(t *testing.T) {
-	result := apitest.New().
+	apitest.New().
 		Handler(newApp()).
 		Post("/api/user/register").
 		JSON(`{"email": "foo@bar.com", "password": "test"}`).
@@ -147,12 +154,21 @@ func TestUpdatePassword(t *testing.T) {
 		Status(http.StatusCreated).
 		End()
 
-	u := unmarshal[user.Presenter](t, &result)
+	// Login to get token
+	loginResult := apitest.New().
+		Handler(newApp()).
+		Post("/api/user/login").
+		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	lr := unmarshal[user.LoginResponse](t, &loginResult)
 
 	apitest.New().
 		Handler(newApp()).
 		Put("/api/user/password").
-		Header("Authorization", u.ID.String()).
+		Header("Authorization", "Bearer "+lr.Token).
 		JSON(`{"oldPassword": "test", "newPassword": "test2"}`).
 		Expect(t).
 		Status(http.StatusOK).
