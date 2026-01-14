@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -64,7 +65,7 @@ func truncateTable() {
 
 func TestCreateUser(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
-	err := us.Create(user)
+	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -72,10 +73,10 @@ func TestCreateUser(t *testing.T) {
 
 func TestFindUserByID(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
-	err := us.Create(user)
+	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	foundUser, err := us.FindByID(user.ID)
+	foundUser, err := us.FindByID(context.Background(), user.ID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
@@ -85,10 +86,10 @@ func TestFindUserByID(t *testing.T) {
 
 func TestFindUserByEmail(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
-	err := us.Create(user)
+	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	foundUser, err := us.FindByEmail(user.Email)
+	foundUser, err := us.FindByEmail(context.Background(), user.Email)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
 
@@ -97,10 +98,10 @@ func TestFindUserByEmail(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
-	err := us.Create(user)
+	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	err = us.Delete(user)
+	err = us.Delete(context.Background(), user)
 	assert.NoError(t, err)
 
 	truncateTable()
@@ -108,14 +109,14 @@ func TestDeleteUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	user := &User{Email: "foo@bar.com", Password: "password"}
-	err := us.Create(user)
+	err := us.Create(context.Background(), user)
 
 	assert.NoError(t, err)
 	user.Email = "bar@foo.com"
-	err = us.Update(user)
+	err = us.Update(context.Background(), user)
 	assert.NoError(t, err)
 
-	foundUser, err := us.FindByID(user.ID)
+	foundUser, err := us.FindByID(context.Background(), user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
 
