@@ -2,7 +2,6 @@ package service_interface
 
 import (
 	"context"
-
 	"github.com/google/uuid"
 	store "pcast-api/store/feed"
 )

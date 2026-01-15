@@ -12,11 +12,12 @@ import (
 )
 
 type Service struct {
-	store modelInterface.User
+	store     modelInterface.User
+	jwtSecret string
 }
 
-func NewService(store modelInterface.User) *Service {
-	return &Service{store: store}
+func NewService(store modelInterface.User, jwtSecret string) *Service {
+	return &Service{store: store, jwtSecret: jwtSecret}
 }
 
 func (s *Service) GetUser(ctx context.Context, id uuid.UUID) (*store.User, error) {
@@ -58,10 +59,10 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", errors.New("invalid password")
 	}
 
-	return createJwtToken(u)
+	return s.createJwtToken(u)
 }
 
-func createJwtToken(user *store.User) (string, error) {
+func (s *Service) createJwtToken(user *store.User) (string, error) {
 	claims := &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Minute)),
 		Subject:   user.ID.String(),
@@ -69,7 +70,7 @@ func createJwtToken(user *store.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString([]byte("testsecret"))
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", err
 	}

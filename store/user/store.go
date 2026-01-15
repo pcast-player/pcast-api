@@ -92,6 +92,7 @@ func convertUserRowToModel(row sqlcgen.User) User {
 		UpdatedAt: row.UpdatedAt,
 		Email:     row.Email,
 		Password:  row.Password,
+		Feeds:     nil, // Not loaded by default
 	}
 }
 

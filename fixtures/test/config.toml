@@ -1,3 +1,6 @@
+[auth]
+jwt_secret = "testsecret"
+
 [server]
 host = "localhost"
 port = 3000

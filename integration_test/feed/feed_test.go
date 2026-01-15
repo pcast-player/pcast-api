@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
 	"github.com/steinfletcher/apitest-jsonpath"
+	"pcast-api/config"
 	"pcast-api/controller"
 	"pcast-api/controller/feed"
 	"pcast-api/controller/user"
@@ -95,7 +96,13 @@ func newApp() *echo.Echo {
 	r := router.NewTestRouter()
 	apiGroup := r.Group("/api")
 
-	controller.NewController(nil, sqlDB, apiGroup)
+	cfg := &config.Config{
+		Auth: config.Auth{
+			JwtSecret: "testsecret",
+		},
+	}
+
+	controller.NewController(cfg, sqlDB, apiGroup)
 
 	return r
 }
@@ -121,7 +128,7 @@ func truncateTables() {
 	sqlDB.Exec("TRUNCATE TABLE feeds")
 }
 
-func createUser(t *testing.T) uuid.UUID {
+func createUser(t *testing.T) (uuid.UUID, string) {
 	result := apitest.New().
 		Handler(newApp()).
 		Post("/api/user/register").
@@ -132,16 +139,26 @@ func createUser(t *testing.T) uuid.UUID {
 
 	u := unmarshal[user.Presenter](t, &result)
 
-	return u.ID
+	loginResult := apitest.New().
+		Handler(newApp()).
+		Post("/api/user/login").
+		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	lr := unmarshal[user.LoginResponse](t, &loginResult)
+
+	return u.ID, lr.Token
 }
 
 func TestGetFeeds(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	apitest.New().
 		Handler(newApp()).
 		Get("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Assert(jsonpath.Len("$", 0)).
 		Status(http.StatusOK).
@@ -151,12 +168,12 @@ func TestGetFeeds(t *testing.T) {
 }
 
 func TestCreateFeed(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"url": "https://example.com","title":"Example"}`).
 		Expect(t).
 		Status(http.StatusCreated).
@@ -165,7 +182,7 @@ func TestCreateFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Get("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Assert(jsonpath.Len("$", 1)).
 		Status(http.StatusOK).
@@ -175,12 +192,12 @@ func TestCreateFeed(t *testing.T) {
 }
 
 func TestCreateFeedPropertyNameError(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"ur": "https://example.com"}`).
 		Expect(t).
 		Status(http.StatusBadRequest).
@@ -190,12 +207,12 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 }
 
 func TestCreateFeedMissingPropertyError(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"url": "https://example.com"}`).
 		Expect(t).
 		Status(http.StatusBadRequest).
@@ -205,12 +222,12 @@ func TestCreateFeedMissingPropertyError(t *testing.T) {
 }
 
 func TestCreateFeedUrlValidationError(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"url": "://example.com"}`).
 		Expect(t).
 		Status(http.StatusBadRequest).
@@ -220,12 +237,12 @@ func TestCreateFeedUrlValidationError(t *testing.T) {
 }
 
 func TestDeleteFeed(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	result := apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"url": "https://example.com","title":"Example"}`).
 		Expect(t).
 		Status(http.StatusCreated).
@@ -236,7 +253,7 @@ func TestDeleteFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Get("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Assert(jsonpath.Len("$", 1)).
 		Status(http.StatusOK).
@@ -245,7 +262,7 @@ func TestDeleteFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Delete(fmt.Sprintf("/api/feeds/%s", fd.ID)).
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -253,7 +270,7 @@ func TestDeleteFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Get("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Assert(jsonpath.Len("$", 0)).
 		Status(http.StatusOK).
@@ -263,12 +280,12 @@ func TestDeleteFeed(t *testing.T) {
 }
 
 func TestUpdateFeed(t *testing.T) {
-	userID := createUser(t)
+	_, token := createUser(t)
 
 	result := apitest.New().
 		Handler(newApp()).
 		Post("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		JSON(`{"url": "https://example.com","title":"Example"}`).
 		Expect(t).
 		Assert(jsonpath.Equal("$.syncedAt", nil)).
@@ -280,7 +297,7 @@ func TestUpdateFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Put(fmt.Sprintf("/api/feeds/%s/sync", fd.ID)).
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Status(http.StatusNoContent).
 		End()
@@ -288,7 +305,7 @@ func TestUpdateFeed(t *testing.T) {
 	apitest.New().
 		Handler(newApp()).
 		Get("/api/feeds").
-		Header("Authorization", userID.String()).
+		Header("Authorization", "Bearer "+token).
 		Expect(t).
 		Assert(jsonpath.NotEqual("$[0].syncedAt", nil)).
 		Status(http.StatusOK).

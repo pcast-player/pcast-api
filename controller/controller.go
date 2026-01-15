@@ -3,6 +3,7 @@ package controller
 import (
 	"database/sql"
 
+	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"pcast-api/config"
 	"pcast-api/controller/feed"
@@ -20,8 +21,13 @@ type Controller struct {
 
 // NewController initializes all handlers
 func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller {
-	newFeedHandler(db, g)
-	newUserHandler(db, g)
+	protected := g.Group("")
+	protected.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte(config.Auth.JwtSecret),
+	}))
+
+	newFeedHandler(db, protected)
+	newUserHandler(config, db, g, protected)
 
 	return &Controller{
 		config: config,
@@ -37,10 +43,10 @@ func newFeedHandler(db *sql.DB, g *echo.Group) {
 	handler.Register(g)
 }
 
-func newUserHandler(db *sql.DB, g *echo.Group) {
+func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, protected *echo.Group) {
 	store := userStore.New(db)
-	service := userService.NewService(store)
+	service := userService.NewService(store, config.Auth.JwtSecret)
 	handler := user.NewHandler(service)
 
-	handler.Register(g)
+	handler.Register(public, protected)
 }

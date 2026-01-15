@@ -1,6 +1,8 @@
 package feed
 
 import (
+	"errors"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -130,13 +132,21 @@ func (f *Handler) SyncFeed(c echo.Context) error {
 }
 
 func getUser(c echo.Context) (uuid.UUID, error) {
-	r := c.Request()
-	userID, err := uuid.Parse(r.Header.Get("Authorization"))
+	token, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return uuid.Nil, errors.New("missing or invalid token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return uuid.Nil, errors.New("invalid token claims")
+	}
+
+	sub, err := claims.GetSubject()
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return userID, nil
+	return uuid.Parse(sub)
 }
 
 func (f *Handler) Register(g *echo.Group) {

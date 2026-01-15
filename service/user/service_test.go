@@ -43,7 +43,7 @@ func (m *mockStore) Delete(ctx context.Context, user *store.User) error {
 func TestService_GetUser(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	result, err := service.GetUser(context.Background(), user.ID)
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestService_GetUser(t *testing.T) {
 func TestService_GetUsers(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	result, err := service.GetUsers(context.Background())
 	assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestService_GetUsers(t *testing.T) {
 func TestService_CreateUser(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.CreateUser(context.Background(), user)
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestService_CreateUser(t *testing.T) {
 func TestService_UpdateUser(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.UpdateUser(context.Background(), user)
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestService_UpdateUser(t *testing.T) {
 func TestService_DeleteUser(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.DeleteUser(context.Background(), user.ID)
 	assert.NoError(t, err)
@@ -90,7 +90,7 @@ func TestService_DeleteUser(t *testing.T) {
 func TestService_DeleteUser_Error(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user, err: assert.AnError}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.DeleteUser(context.Background(), user.ID)
 	assert.Error(t, err)
@@ -99,7 +99,7 @@ func TestService_DeleteUser_Error(t *testing.T) {
 func TestService_CreateUser_Error(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user, err: assert.AnError}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.CreateUser(context.Background(), user)
 	assert.Error(t, err)
@@ -108,7 +108,7 @@ func TestService_CreateUser_Error(t *testing.T) {
 func TestService_UpdateUser_Error(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user, err: assert.AnError}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	err := service.UpdateUser(context.Background(), user)
 	assert.Error(t, err)
@@ -117,7 +117,7 @@ func TestService_UpdateUser_Error(t *testing.T) {
 func TestService_GetUser_Error(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user, err: assert.AnError}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	_, err := service.GetUser(context.Background(), user.ID)
 	assert.Error(t, err)
@@ -126,7 +126,7 @@ func TestService_GetUser_Error(t *testing.T) {
 func TestService_GetUsers_Error(t *testing.T) {
 	user := &store.User{Email: "foo@bar.com", Password: "password"}
 	s := &mockStore{user: user, err: assert.AnError}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	_, err := service.GetUsers(context.Background())
 	assert.Error(t, err)
@@ -142,7 +142,7 @@ func TestService_Login(t *testing.T) {
 
 	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
 	s := &mockStore{user: user}
-	service := NewService(s)
+	service := NewService(s, "testsecret")
 
 	tokenString, err := service.Login(context.Background(), user.Email, password)
 	assert.NoError(t, err)

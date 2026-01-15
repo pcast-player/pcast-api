@@ -2,7 +2,6 @@ package feed
 
 import (
 	"context"
-
 	"github.com/google/uuid"
 	modelInterface "pcast-api/service/model_interface"
 	store "pcast-api/store/feed"

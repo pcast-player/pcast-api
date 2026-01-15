@@ -9,6 +9,11 @@ import (
 type Config struct {
 	Server   Server
 	Database Database
+	Auth     Auth
+}
+
+type Auth struct {
+	JwtSecret string `toml:"jwt_secret"`
 }
 
 type Server struct {
