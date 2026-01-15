@@ -503,6 +503,7 @@ func TestCreateFeed(t *testing.T) {
 - **Service Layer**: Often thin pass-through layer coordinating between controllers and stores
 - **sqlc Generated Code**: Located in `db/sqlcgen/` (DO NOT manually edit)
 - **Ignored Files**: `.gitignore` excludes `*.db`, `target/`, and `.idea/`
+- **Conventional Commits**: Use the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages
 
 ## File Organization
 
