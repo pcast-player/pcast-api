@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -97,6 +98,10 @@ func (s *Store) Create(ctx context.Context, feed *Feed) error {
 }
 
 func (s *Store) Update(ctx context.Context, feed *Feed) error {
+	if feed.URL == "" {
+		return fmt.Errorf("url cannot be empty")
+	}
+
 	feed.UpdatedAt = time.Now()
 
 	return s.queries.UpdateFeed(ctx, sqlcgen.UpdateFeedParams{
