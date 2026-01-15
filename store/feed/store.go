@@ -68,15 +68,7 @@ func (s *Store) FindByIdAndUserID(ctx context.Context, id, userID uuid.UUID) (*F
 		return nil, err
 	}
 
-	return &Feed{
-		ID:        row.ID,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-		UserID:    row.UserID,
-		Title:     row.Title,
-		URL:       row.Url,
-		SyncedAt:  nullTimeToTimePtr(row.SyncedAt),
-	}, nil
+	return convertFeedRowToModelPtr(*row), nil
 }
 
 func (s *Store) Create(ctx context.Context, feed *Feed) error {
