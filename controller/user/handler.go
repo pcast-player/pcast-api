@@ -2,10 +2,12 @@ package user
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+
 	serviceInterface "pcast-api/controller/service_interface"
 	authMiddleware "pcast-api/middleware/auth"
-	httpstatus "pcast-api/middleware/httpstatus"
 	userService "pcast-api/service/user"
 )
 
@@ -26,7 +28,7 @@ func NewHandler(service serviceInterface.User, middleware *authMiddleware.JWTMid
 // @Produce json
 // @Param user body RegisterRequest true "RegisterRequest data"
 // @Success 201 {object} Presenter
-// @Router /user [post]
+// @Router /user/register [post]
 func (h *Handler) registerUser(c echo.Context) error {
 	userRequest := new(RegisterRequest)
 	if err := c.Bind(userRequest); err != nil {
@@ -38,12 +40,12 @@ func (h *Handler) registerUser(c echo.Context) error {
 
 	ud, err := h.service.CreateUser(c.Request().Context(), userRequest.Email, userRequest.Password)
 	if err != nil {
-		return c.NoContent(httpstatus.StatusBadRequest)
+		return c.NoContent(http.StatusBadRequest)
 	}
 
 	res := NewPresenter(ud)
 
-	return c.JSON(httpstatus.StatusCreated, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
 // LoginUser godoc
@@ -66,10 +68,10 @@ func (h *Handler) loginUser(c echo.Context) error {
 
 	token, err := h.service.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
-		return c.NoContent(httpstatus.StatusUnauthorized)
+		return c.NoContent(http.StatusUnauthorized)
 	}
 
-	return c.JSON(httpstatus.StatusOK, LoginResponse{Token: token})
+	return c.JSON(http.StatusOK, LoginResponse{Token: token})
 }
 
 // UpdatePassword godoc
@@ -85,7 +87,7 @@ func (h *Handler) loginUser(c echo.Context) error {
 func (h *Handler) updatePassword(c echo.Context) error {
 	userID, err := h.middleware.GetUserID(c)
 	if err != nil {
-		return c.NoContent(httpstatus.StatusUnauthorized)
+		return c.NoContent(http.StatusUnauthorized)
 	}
 
 	pwRequest := new(UpdatePasswordRequest)
@@ -99,12 +101,12 @@ func (h *Handler) updatePassword(c echo.Context) error {
 	err = h.service.UpdatePassword(c.Request().Context(), *userID, pwRequest.OldPassword, pwRequest.NewPassword)
 	if err != nil {
 		if errors.Is(err, userService.ErrInvalidPassword) {
-			return c.NoContent(httpstatus.StatusUnauthorized)
+			return c.NoContent(http.StatusUnauthorized)
 		}
-		return c.NoContent(httpstatus.StatusBadRequest)
+		return c.NoContent(http.StatusBadRequest)
 	}
 
-	return c.NoContent(httpstatus.StatusOK)
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *Handler) Register(public *echo.Group, protected *echo.Group) {

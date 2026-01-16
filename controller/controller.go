@@ -15,13 +15,8 @@ import (
 	userStore "pcast-api/store/user"
 )
 
-type Controller struct {
-	config *config.Config
-	db     *sql.DB
-}
-
 // NewController initializes all handlers
-func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller {
+func NewController(config *config.Config, db *sql.DB, g *echo.Group) {
 	middleware := authMiddleware.NewJWTMiddleware([]byte(config.Auth.JwtSecret))
 
 	protected := g.Group("")
@@ -40,12 +35,7 @@ func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller
 	})
 
 	newFeedHandler(db, protected, middleware)
-	newUserHandler(config, db, g, protected)
-
-	return &Controller{
-		config: config,
-		db:     db,
-	}
+	newUserHandler(config, db, g, protected, middleware)
 }
 
 func newFeedHandler(db *sql.DB, g *echo.Group, middleware *authMiddleware.JWTMiddleware) {
@@ -56,10 +46,9 @@ func newFeedHandler(db *sql.DB, g *echo.Group, middleware *authMiddleware.JWTMid
 	handler.Register(g)
 }
 
-func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, protected *echo.Group) {
+func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, protected *echo.Group, middleware *authMiddleware.JWTMiddleware) {
 	store := userStore.New(db)
 	service := userService.NewService(store, config.Auth.JwtSecret, config.Auth.JwtExpirationMin)
-	middleware := authMiddleware.NewJWTMiddleware([]byte(config.Auth.JwtSecret))
 	handler := user.NewHandler(service, middleware)
 
 	handler.Register(public, protected)

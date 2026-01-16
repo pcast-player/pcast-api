@@ -13,5 +13,5 @@ type Feed interface {
 	Delete(ctx context.Context, feed *feed.Feed) error
 	Update(ctx context.Context, feed *feed.Feed) error
 	FindByUserID(ctx context.Context, userID uuid.UUID) ([]feed.Feed, error)
-	FindByIdAndUserID(ctx context.Context, id, userID uuid.UUID) (*feed.Feed, error)
+	FindByIDAndUserID(ctx context.Context, id, userID uuid.UUID) (*feed.Feed, error)
 }

@@ -10,13 +10,11 @@ import (
 )
 
 type Store struct {
-	db      *sql.DB
 	queries *sqlcgen.Queries
 }
 
 func New(database *sql.DB) *Store {
 	return &Store{
-		db:      database,
 		queries: sqlcgen.New(database),
 	}
 }
@@ -34,7 +32,7 @@ func (s *Store) FindAll(ctx context.Context) ([]Episode, error) {
 			ID:              row.ID,
 			CreatedAt:       row.CreatedAt,
 			UpdatedAt:       row.UpdatedAt,
-			FeedId:          row.FeedID,
+			FeedID:          row.FeedID,
 			FeedGUID:        row.FeedGuid,
 			CurrentPosition: nullInt32ToIntPtr(row.CurrentPosition),
 			Played:          row.Played,
@@ -53,7 +51,7 @@ func (s *Store) FindByID(ctx context.Context, id uuid.UUID) (*Episode, error) {
 		ID:              row.ID,
 		CreatedAt:       row.CreatedAt,
 		UpdatedAt:       row.UpdatedAt,
-		FeedId:          row.FeedID,
+		FeedID:          row.FeedID,
 		FeedGUID:        row.FeedGuid,
 		CurrentPosition: nullInt32ToIntPtr(row.CurrentPosition),
 		Played:          row.Played,
@@ -69,7 +67,7 @@ func (s *Store) Create(ctx context.Context, episode *Episode) error {
 		ID:              episode.ID,
 		CreatedAt:       episode.CreatedAt,
 		UpdatedAt:       episode.UpdatedAt,
-		FeedID:          episode.FeedId,
+		FeedID:          episode.FeedID,
 		FeedGuid:        episode.FeedGUID,
 		CurrentPosition: intPtrToNullInt32(episode.CurrentPosition),
 		Played:          episode.Played,
@@ -84,7 +82,7 @@ func (s *Store) Update(ctx context.Context, episode *Episode) error {
 	return s.queries.UpdateEpisode(ctx, sqlcgen.UpdateEpisodeParams{
 		ID:              episode.ID,
 		UpdatedAt:       episode.UpdatedAt,
-		FeedID:          episode.FeedId,
+		FeedID:          episode.FeedID,
 		FeedGuid:        episode.FeedGUID,
 		CurrentPosition: intPtrToNullInt32(episode.CurrentPosition),
 		Played:          episode.Played,
