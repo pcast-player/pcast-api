@@ -10,7 +10,7 @@ type Episode struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	FeedId          uuid.UUID
+	FeedID          uuid.UUID
 	FeedGUID        string
 	CurrentPosition *int
 	Played          bool

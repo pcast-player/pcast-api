@@ -187,7 +187,7 @@ func TestFindFeedByUserID_EmptyResult(t *testing.T) {
 	truncateTable()
 }
 
-func TestFindFeedByIdAndUserID(t *testing.T) {
+func TestFindFeedByIDAndUserID(t *testing.T) {
 	userID := uuid.Must(uuid.NewV7())
 	ensureUserExists(t, userID)
 
@@ -195,7 +195,7 @@ func TestFindFeedByIdAndUserID(t *testing.T) {
 	err := fs.Create(context.Background(), feed)
 	assert.NoError(t, err)
 
-	foundFeed, err := fs.FindByIdAndUserID(context.Background(), feed.ID, userID)
+	foundFeed, err := fs.FindByIDAndUserID(context.Background(), feed.ID, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, feed.URL, foundFeed.URL)
 

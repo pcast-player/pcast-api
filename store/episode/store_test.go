@@ -71,10 +71,10 @@ func truncateTable() {
 }
 
 func newEpisode() *Episode {
-	id, _ := uuid.NewV7()
+	id := uuid.Must(uuid.NewV7())
 	guid := strconv.Itoa(rand.Intn(9999999999))
 
-	return &Episode{FeedId: id, FeedGUID: fmt.Sprintf("tag:soundcloud,2010:tracks/%s", guid)}
+	return &Episode{FeedID: id, FeedGUID: fmt.Sprintf("tag:soundcloud,2010:tracks/%s", guid)}
 }
 
 func TestCreateEpisode(t *testing.T) {
@@ -97,7 +97,7 @@ func TestFindEpisodeByID(t *testing.T) {
 		t.FailNow()
 	}
 
-	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
+	assert.Equal(t, episode.FeedID, foundEpisode.FeedID)
 
 	truncateTable()
 }
@@ -118,13 +118,13 @@ func TestUpdateEpisode(t *testing.T) {
 	err := es.Create(context.Background(), episode)
 	assert.NoError(t, err)
 
-	episode.FeedId, _ = uuid.NewV7()
+	episode.FeedID = uuid.Must(uuid.NewV7())
 	err = es.Update(context.Background(), episode)
 	assert.NoError(t, err)
 
 	foundEpisode, err := es.FindByID(context.Background(), episode.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, episode.FeedId, foundEpisode.FeedId)
+	assert.Equal(t, episode.FeedID, foundEpisode.FeedID)
 
 	truncateTable()
 }

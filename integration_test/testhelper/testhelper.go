@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/labstack/echo/v4"
+
 	"pcast-api/config"
 	"pcast-api/controller"
 	"pcast-api/db"
@@ -15,7 +16,14 @@ import (
 
 var DB *sql.DB
 
+// TestDSN is the connection string for the test database
 const TestDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
+
+// Test configuration constants
+const (
+	TestJWTSecret        = "testsecret"
+	TestJWTExpirationMin = 10
+)
 
 func Setup() {
 	DB = db.NewTestDB(TestDSN)
@@ -89,8 +97,8 @@ func NewApp() *echo.Echo {
 
 	cfg := &config.Config{
 		Auth: config.Auth{
-			JwtSecret:        "testsecret",
-			JwtExpirationMin: 10,
+			JwtSecret:        TestJWTSecret,
+			JwtExpirationMin: TestJWTExpirationMin,
 		},
 	}
 

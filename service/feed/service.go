@@ -29,7 +29,7 @@ func (s *Service) CreateFeed(ctx context.Context, feed *store.Feed) error {
 }
 
 func (s *Service) DeleteFeed(ctx context.Context, userID uuid.UUID, id uuid.UUID) error {
-	feed, err := s.store.FindByIdAndUserID(ctx, id, userID)
+	feed, err := s.store.FindByIDAndUserID(ctx, id, userID)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (s *Service) DeleteFeed(ctx context.Context, userID uuid.UUID, id uuid.UUID
 }
 
 func (s *Service) SyncFeed(ctx context.Context, userID uuid.UUID, id uuid.UUID) error {
-	feed, err := s.store.FindByIdAndUserID(ctx, id, userID)
+	feed, err := s.store.FindByIDAndUserID(ctx, id, userID)
 	if err != nil {
 		return err
 	}

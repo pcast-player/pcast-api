@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/swaggo/echo-swagger"
+	"log"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
+
 	"pcast-api/config"
 	"pcast-api/controller"
 	"pcast-api/db"
@@ -27,12 +30,19 @@ func main() {
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 
-	c := config.New(cfgFile)
+	c, err := config.New(cfgFile)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	r := router.New(c)
 	apiGroup := r.Group("/api")
 
 	// Initialize database connection (all stores now use sqlc)
-	d := db.New(c)
+	d, err := db.New(c)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 
 	controller.NewController(c, d, apiGroup)
 

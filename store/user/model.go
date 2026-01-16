@@ -1,10 +1,11 @@
 package user
 
 import (
-	"github.com/google/uuid"
-	"pcast-api/store"
-	"pcast-api/store/feed"
 	"time"
+
+	"github.com/google/uuid"
+
+	"pcast-api/store"
 )
 
 type User struct {
@@ -13,7 +14,6 @@ type User struct {
 	UpdatedAt time.Time
 	Email     string
 	Password  string
-	Feeds     []feed.Feed `db:"-"` // Not populated by sqlc, manual load if needed
 }
 
 func (u *User) SetID(id uuid.UUID) {

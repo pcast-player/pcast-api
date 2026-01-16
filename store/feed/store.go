@@ -11,13 +11,11 @@ import (
 )
 
 type Store struct {
-	db      *sql.DB
 	queries *sqlcgen.Queries
 }
 
 func New(database *sql.DB) *Store {
 	return &Store{
-		db:      database,
 		queries: sqlcgen.New(database),
 	}
 }
@@ -59,7 +57,7 @@ func (s *Store) FindByUserID(ctx context.Context, userID uuid.UUID) ([]Feed, err
 	return feeds, nil
 }
 
-func (s *Store) FindByIdAndUserID(ctx context.Context, id, userID uuid.UUID) (*Feed, error) {
+func (s *Store) FindByIDAndUserID(ctx context.Context, id, userID uuid.UUID) (*Feed, error) {
 	row, err := s.queries.FindFeedByIDAndUserID(ctx, sqlcgen.FindFeedByIDAndUserIDParams{
 		ID:     id,
 		UserID: userID,

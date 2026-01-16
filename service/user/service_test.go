@@ -166,3 +166,74 @@ func TestService_Login(t *testing.T) {
 		assert.Fail(t, "claims not found")
 	}
 }
+
+func TestService_Login_UserNotFound(t *testing.T) {
+	s := &mockStore{err: assert.AnError}
+	service := NewService(s, "testsecret", 10)
+
+	tokenString, err := service.Login(context.Background(), "nonexistent@bar.com", "password")
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidPassword, err)
+	assert.Empty(t, tokenString)
+}
+
+func TestService_Login_WrongPassword(t *testing.T) {
+	userID := uuid.Must(uuid.NewV7())
+
+	hash, err := argon2id.CreateHash("correctpassword", argon2id.DefaultParams)
+	assert.NoError(t, err)
+
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	s := &mockStore{user: user}
+	service := NewService(s, "testsecret", 10)
+
+	tokenString, err := service.Login(context.Background(), user.Email, "wrongpassword")
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidPassword, err)
+	assert.Empty(t, tokenString)
+}
+
+func TestService_UpdatePassword(t *testing.T) {
+	userID := uuid.Must(uuid.NewV7())
+	oldPassword := "oldpassword"
+	newPassword := "newpassword"
+
+	hash, err := argon2id.CreateHash(oldPassword, argon2id.DefaultParams)
+	assert.NoError(t, err)
+
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	s := &mockStore{user: user}
+	service := NewService(s, "testsecret", 10)
+
+	err = service.UpdatePassword(context.Background(), userID, oldPassword, newPassword)
+	assert.NoError(t, err)
+
+	// Verify the password was updated
+	match, err := argon2id.ComparePasswordAndHash(newPassword, user.Password)
+	assert.NoError(t, err)
+	assert.True(t, match)
+}
+
+func TestService_UpdatePassword_WrongOldPassword(t *testing.T) {
+	userID := uuid.Must(uuid.NewV7())
+
+	hash, err := argon2id.CreateHash("correctpassword", argon2id.DefaultParams)
+	assert.NoError(t, err)
+
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	s := &mockStore{user: user}
+	service := NewService(s, "testsecret", 10)
+
+	err = service.UpdatePassword(context.Background(), userID, "wrongpassword", "newpassword")
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidPassword, err)
+}
+
+func TestService_UpdatePassword_UserNotFound(t *testing.T) {
+	s := &mockStore{err: assert.AnError}
+	service := NewService(s, "testsecret", 10)
+
+	err := service.UpdatePassword(context.Background(), uuid.Must(uuid.NewV7()), "old", "new")
+	assert.Error(t, err)
+	assert.Equal(t, ErrUserNotFound, err)
+}

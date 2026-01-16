@@ -6,22 +6,23 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+
 	"pcast-api/config"
 )
 
 // New returns a standard sql.DB connection for use with sqlc
-func New(c *config.Config) *sql.DB {
+func New(c *config.Config) (*sql.DB, error) {
 	dsn := c.Database.GetPostgresDSN()
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		panic(fmt.Sprintf("failed to connect database: %v", err))
+		return nil, fmt.Errorf("failed to connect database: %w", err)
 	}
 
 	if err := createConnectionPool(c, db); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }
 
 func createConnectionPool(c *config.Config, db *sql.DB) error {

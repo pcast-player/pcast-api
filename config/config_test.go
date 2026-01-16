@@ -1,15 +1,16 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
-	cfg := New("./../fixtures/test/config.toml")
-	if cfg == nil {
-		t.Errorf("New() = nil, want *Config")
-	}
+	cfg, err := New("./../fixtures/test/config.toml")
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
 	assert.Equal(t, "localhost", cfg.Server.Host)
 	assert.Equal(t, 3000, cfg.Server.Port)
@@ -26,4 +27,17 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, 10, cfg.Database.MaxConnections)
 	assert.Equal(t, 5, cfg.Database.MaxIdleConnections)
 	assert.Equal(t, "5m", cfg.Database.MaxLifetime)
+}
+
+func TestNew_FileNotFound(t *testing.T) {
+	cfg, err := New("nonexistent.toml")
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+	assert.Contains(t, err.Error(), "not found")
+}
+
+func TestNew_DefaultJWTExpiration(t *testing.T) {
+	cfg, err := New("./../fixtures/test/config.toml")
+	require.NoError(t, err)
+	assert.Equal(t, DefaultJWTExpirationMin, cfg.Auth.JwtExpirationMin)
 }

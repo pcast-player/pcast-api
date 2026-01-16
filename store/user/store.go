@@ -10,13 +10,11 @@ import (
 )
 
 type Store struct {
-	db      *sql.DB
 	queries *sqlcgen.Queries
 }
 
 func New(database *sql.DB) *Store {
 	return &Store{
-		db:      database,
 		queries: sqlcgen.New(database),
 	}
 }
@@ -92,7 +90,6 @@ func convertUserRowToModel(row sqlcgen.User) User {
 		UpdatedAt: row.UpdatedAt,
 		Email:     row.Email,
 		Password:  row.Password,
-		Feeds:     nil, // Not loaded by default
 	}
 }
 

@@ -2,9 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/pelletier/go-toml/v2"
 	"os"
+
+	"github.com/pelletier/go-toml/v2"
 )
+
+// DefaultJWTExpirationMin is the default JWT token expiration time in minutes
+const DefaultJWTExpirationMin = 10
 
 type Config struct {
 	Server   Server
@@ -35,32 +39,36 @@ type Database struct {
 	MaxIdleConnections int    `toml:"max_idle_connections"`
 	MaxLifetime        string `toml:"max_lifetime"`
 	Logging            bool
+	TimeZone           string `toml:"time_zone"`
 }
 
 func (d *Database) GetPostgresDSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Europe/Berlin",
-		d.Host, d.Port, d.User, d.Password, d.Database)
+	timeZone := d.TimeZone
+	if timeZone == "" {
+		timeZone = "UTC"
+	}
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=%s",
+		d.Host, d.Port, d.User, d.Password, d.Database, timeZone)
 }
 
-func New(file string) *Config {
+// New creates a new Config from a TOML file. Returns an error if the file cannot be read or parsed.
+func New(file string) (*Config, error) {
 	cfgString, err := os.ReadFile(file)
 	if err != nil {
-		println(fmt.Sprintf("Error: config file '%s' not found", file))
-		os.Exit(1)
+		return nil, fmt.Errorf("config file '%s' not found: %w", file, err)
 	}
 
 	var cfg Config
 	err = toml.Unmarshal(cfgString, &cfg)
 	if err != nil {
-		println(fmt.Sprintf("Error: config file '%s' is not valid %s", file, err))
-		os.Exit(1)
+		return nil, fmt.Errorf("config file '%s' is not valid: %w", file, err)
 	}
 
 	if cfg.Auth.JwtExpirationMin == 0 {
-		cfg.Auth.JwtExpirationMin = 10
+		cfg.Auth.JwtExpirationMin = DefaultJWTExpirationMin
 	}
 
-	return &cfg
+	return &cfg, nil
 }
 
 func (s *Server) GetAddress() string {
