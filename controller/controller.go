@@ -8,6 +8,7 @@ import (
 	"pcast-api/config"
 	"pcast-api/controller/feed"
 	"pcast-api/controller/user"
+	authMiddleware "pcast-api/middleware/auth"
 	feedService "pcast-api/service/feed"
 	userService "pcast-api/service/user"
 	feedStore "pcast-api/store/feed"
@@ -26,7 +27,7 @@ func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller
 		SigningKey: []byte(config.Auth.JwtSecret),
 	}))
 
-	newFeedHandler(db, protected)
+	newFeedHandler(db, protected, []byte(config.Auth.JwtSecret))
 	newUserHandler(config, db, g, protected)
 
 	return &Controller{
@@ -35,18 +36,20 @@ func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller
 	}
 }
 
-func newFeedHandler(db *sql.DB, g *echo.Group) {
+func newFeedHandler(db *sql.DB, g *echo.Group, jwtSecret []byte) {
 	store := feedStore.New(db)
 	service := feedService.NewService(store)
-	handler := feed.NewHandler(service)
+	middleware := authMiddleware.NewJWTMiddleware(jwtSecret)
+	handler := feed.NewHandler(service, middleware)
 
 	handler.Register(g)
 }
 
 func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, protected *echo.Group) {
 	store := userStore.New(db)
-	service := userService.NewService(store, config.Auth.JwtSecret)
-	handler := user.NewHandler(service)
+	service := userService.NewService(store, config.Auth.JwtSecret, config.Auth.JwtExpirationMin)
+	middleware := authMiddleware.NewJWTMiddleware([]byte(config.Auth.JwtSecret))
+	handler := user.NewHandler(service, middleware)
 
 	handler.Register(public, protected)
 }

@@ -1,21 +1,21 @@
 package user
 
 import (
-	"github.com/alexedwards/argon2id"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"errors"
 	"github.com/labstack/echo/v4"
-	"net/http"
 	serviceInterface "pcast-api/controller/service_interface"
-	model "pcast-api/store/user"
+	authMiddleware "pcast-api/middleware/auth"
+	httpstatus "pcast-api/middleware/httpstatus"
+	userService "pcast-api/service/user"
 )
 
 type Handler struct {
-	service serviceInterface.User
+	service    serviceInterface.User
+	middleware *authMiddleware.JWTMiddleware
 }
 
-func NewHandler(service serviceInterface.User) *Handler {
-	return &Handler{service: service}
+func NewHandler(service serviceInterface.User, middleware *authMiddleware.JWTMiddleware) *Handler {
+	return &Handler{service: service, middleware: middleware}
 }
 
 // RegisterUser godoc
@@ -36,21 +36,14 @@ func (h *Handler) registerUser(c echo.Context) error {
 		return err
 	}
 
-	hash, err := argon2id.CreateHash(userRequest.Password, argon2id.DefaultParams)
+	ud, err := h.service.CreateUser(c.Request().Context(), userRequest.Email, userRequest.Password)
 	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return c.NoContent(httpstatus.StatusBadRequest)
 	}
 
-	ud := model.User{Email: userRequest.Email, Password: hash}
+	res := NewPresenter(ud)
 
-	err = h.service.CreateUser(c.Request().Context(), &ud)
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
-
-	res := NewPresenter(&ud)
-
-	return c.JSON(http.StatusCreated, res)
+	return c.JSON(httpstatus.StatusCreated, res)
 }
 
 // LoginUser godoc
@@ -73,10 +66,10 @@ func (h *Handler) loginUser(c echo.Context) error {
 
 	token, err := h.service.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, err.Error())
+		return c.NoContent(httpstatus.StatusUnauthorized)
 	}
 
-	return c.JSON(http.StatusOK, LoginResponse{Token: token})
+	return c.JSON(httpstatus.StatusOK, LoginResponse{Token: token})
 }
 
 // UpdatePassword godoc
@@ -90,23 +83,9 @@ func (h *Handler) loginUser(c echo.Context) error {
 // @Success 200
 // @Router /user/password [put]
 func (h *Handler) updatePassword(c echo.Context) error {
-	token, ok := c.Get("user").(*jwt.Token)
-	if !ok {
-		return c.NoContent(http.StatusUnauthorized)
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return c.NoContent(http.StatusUnauthorized)
-	}
-
-	sub, err := claims.GetSubject()
+	userID, err := h.middleware.GetUserID(c)
 	if err != nil {
-		return c.NoContent(http.StatusUnauthorized)
-	}
-
-	uid, err := uuid.Parse(sub)
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
+		return c.NoContent(httpstatus.StatusUnauthorized)
 	}
 
 	pwRequest := new(UpdatePasswordRequest)
@@ -117,34 +96,15 @@ func (h *Handler) updatePassword(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.service.GetUser(c.Request().Context(), uid)
+	err = h.service.UpdatePassword(c.Request().Context(), *userID, pwRequest.OldPassword, pwRequest.NewPassword)
 	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-
+		if errors.Is(err, userService.ErrInvalidPassword) {
+			return c.NoContent(httpstatus.StatusUnauthorized)
+		}
+		return c.NoContent(httpstatus.StatusBadRequest)
 	}
 
-	match, err := argon2id.ComparePasswordAndHash(pwRequest.OldPassword, user.Password)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	if !match {
-		return c.NoContent(http.StatusUnauthorized)
-	}
-
-	hash, err := argon2id.CreateHash(pwRequest.NewPassword, argon2id.DefaultParams)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	user.Password = hash
-
-	err = h.service.UpdateUser(c.Request().Context(), user)
-	if err != nil {
-		return c.NoContent(http.StatusBadRequest)
-	}
-
-	return c.NoContent(http.StatusOK)
-
+	return c.NoContent(httpstatus.StatusOK)
 }
 
 func (h *Handler) Register(public *echo.Group, protected *echo.Group) {

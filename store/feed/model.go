@@ -2,6 +2,7 @@ package feed
 
 import (
 	"github.com/google/uuid"
+	"pcast-api/store"
 	"time"
 )
 
@@ -15,24 +16,30 @@ type Feed struct {
 	SyncedAt  *time.Time
 }
 
-// BeforeCreate sets default values before creating a feed
-// Call this explicitly in Store.Create()
+func (f *Feed) SetID(id uuid.UUID) {
+	f.ID = id
+}
+
+func (f *Feed) GetID() uuid.UUID {
+	return f.ID
+}
+
+func (f *Feed) SetCreatedAt(t time.Time) {
+	f.CreatedAt = t
+}
+
+func (f *Feed) GetCreatedAt() time.Time {
+	return f.CreatedAt
+}
+
+func (f *Feed) SetUpdatedAt(t time.Time) {
+	f.UpdatedAt = t
+}
+
+func (f *Feed) GetUpdatedAt() time.Time {
+	return f.UpdatedAt
+}
+
 func (f *Feed) BeforeCreate() error {
-	if f.ID == uuid.Nil {
-		id, err := uuid.NewV7()
-		if err != nil {
-			return err
-		}
-		f.ID = id
-	}
-
-	if f.CreatedAt.IsZero() {
-		f.CreatedAt = time.Now()
-	}
-
-	if f.UpdatedAt.IsZero() {
-		f.UpdatedAt = time.Now()
-	}
-
-	return nil
+	return store.BeforeCreate(f)
 }

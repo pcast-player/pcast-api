@@ -20,10 +20,6 @@ func (s *Service) GetFeed(ctx context.Context, id uuid.UUID) (*store.Feed, error
 	return s.store.FindByID(ctx, id)
 }
 
-func (s *Service) GetFeeds(ctx context.Context, userID uuid.UUID) ([]store.Feed, error) {
-	return s.store.FindByUserID(ctx, userID)
-}
-
 func (s *Service) GetFeedsByUserID(ctx context.Context, userID uuid.UUID) ([]store.Feed, error) {
 	return s.store.FindByUserID(ctx, userID)
 }

@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type Auth struct {
-	JwtSecret string `toml:"jwt_secret"`
+	JwtSecret        string `toml:"jwt_secret"`
+	JwtExpirationMin int    `toml:"jwt_expiration_min"`
 }
 
 type Server struct {
@@ -53,6 +54,10 @@ func New(file string) *Config {
 	if err != nil {
 		println(fmt.Sprintf("Error: config file '%s' is not valid %s", file, err))
 		os.Exit(1)
+	}
+
+	if cfg.Auth.JwtExpirationMin == 0 {
+		cfg.Auth.JwtExpirationMin = 10
 	}
 
 	return &cfg
