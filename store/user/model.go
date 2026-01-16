@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/google/uuid"
+	"pcast-api/store"
 	"pcast-api/store/feed"
 	"time"
 )
@@ -15,24 +16,30 @@ type User struct {
 	Feeds     []feed.Feed `db:"-"` // Not populated by sqlc, manual load if needed
 }
 
-// BeforeCreate sets default values before creating a user
-// Call this explicitly in Store.Create()
+func (u *User) SetID(id uuid.UUID) {
+	u.ID = id
+}
+
+func (u *User) GetID() uuid.UUID {
+	return u.ID
+}
+
+func (u *User) SetCreatedAt(t time.Time) {
+	u.CreatedAt = t
+}
+
+func (u *User) GetCreatedAt() time.Time {
+	return u.CreatedAt
+}
+
+func (u *User) SetUpdatedAt(t time.Time) {
+	u.UpdatedAt = t
+}
+
+func (u *User) GetUpdatedAt() time.Time {
+	return u.UpdatedAt
+}
+
 func (u *User) BeforeCreate() error {
-	if u.ID == uuid.Nil {
-		id, err := uuid.NewV7()
-		if err != nil {
-			return err
-		}
-		u.ID = id
-	}
-
-	if u.CreatedAt.IsZero() {
-		u.CreatedAt = time.Now()
-	}
-
-	if u.UpdatedAt.IsZero() {
-		u.UpdatedAt = time.Now()
-	}
-
-	return nil
+	return store.BeforeCreate(u)
 }

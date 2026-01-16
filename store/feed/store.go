@@ -110,8 +110,6 @@ func (s *Store) Delete(ctx context.Context, feed *Feed) error {
 	return s.queries.DeleteFeed(ctx, feed.ID)
 }
 
-// Helper functions to convert between *time.Time and sql.NullTime
-// Helper functions to convert between *time.Time and sql.NullTime
 func timePtrToNullTime(t *time.Time) sql.NullTime {
 	if t == nil {
 		return sql.NullTime{Valid: false}

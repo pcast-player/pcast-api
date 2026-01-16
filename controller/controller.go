@@ -8,6 +8,7 @@ import (
 	"pcast-api/config"
 	"pcast-api/controller/feed"
 	"pcast-api/controller/user"
+	authMiddleware "pcast-api/middleware/auth"
 	feedService "pcast-api/service/feed"
 	userService "pcast-api/service/user"
 	feedStore "pcast-api/store/feed"
@@ -21,12 +22,24 @@ type Controller struct {
 
 // NewController initializes all handlers
 func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller {
+	middleware := authMiddleware.NewJWTMiddleware([]byte(config.Auth.JwtSecret))
+
 	protected := g.Group("")
 	protected.Use(echojwt.WithConfig(echojwt.Config{
 		SigningKey: []byte(config.Auth.JwtSecret),
 	}))
+	protected.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID, err := middleware.ExtractUserID(c)
+			if err != nil {
+				return err
+			}
+			middleware.SetUserID(c, *userID)
+			return next(c)
+		}
+	})
 
-	newFeedHandler(db, protected)
+	newFeedHandler(db, protected, middleware)
 	newUserHandler(config, db, g, protected)
 
 	return &Controller{
@@ -35,18 +48,19 @@ func NewController(config *config.Config, db *sql.DB, g *echo.Group) *Controller
 	}
 }
 
-func newFeedHandler(db *sql.DB, g *echo.Group) {
+func newFeedHandler(db *sql.DB, g *echo.Group, middleware *authMiddleware.JWTMiddleware) {
 	store := feedStore.New(db)
 	service := feedService.NewService(store)
-	handler := feed.NewHandler(service)
+	handler := feed.NewHandler(service, middleware)
 
 	handler.Register(g)
 }
 
 func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, protected *echo.Group) {
 	store := userStore.New(db)
-	service := userService.NewService(store, config.Auth.JwtSecret)
-	handler := user.NewHandler(service)
+	service := userService.NewService(store, config.Auth.JwtSecret, config.Auth.JwtExpirationMin)
+	middleware := authMiddleware.NewJWTMiddleware([]byte(config.Auth.JwtSecret))
+	handler := user.NewHandler(service, middleware)
 
 	handler.Register(public, protected)
 }
