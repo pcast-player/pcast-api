@@ -21,6 +21,26 @@ definitions:
       url:
         type: string
     type: object
+  oauth.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  user.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  user.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
   user.Presenter:
     properties:
       id:
@@ -52,6 +72,61 @@ info:
   title: PCast REST-API
   version: "0.1"
 paths:
+  /auth/google:
+    get:
+      description: Redirects to Google OAuth consent screen
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to Google
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Initiate Google OAuth
+      tags:
+      - auth
+  /auth/google/callback:
+    get:
+      description: Handles Google OAuth callback and returns JWT token
+      parameters:
+      - description: Authorization code from Google
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State parameter for CSRF validation
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/oauth.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Google OAuth callback
+      tags:
+      - auth
   /feeds:
     get:
       description: Retrieve all feeds from the store
@@ -139,26 +214,26 @@ paths:
       summary: Sync a feed
       tags:
       - feeds
-  /user:
+  /user/login:
     post:
       consumes:
       - application/json
-      description: Register a new user with the data provided in the request
+      description: Login user with the data provided in the request
       parameters:
-      - description: RegisterRequest data
+      - description: LoginRequest data
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/user.RegisterRequest'
+          $ref: '#/definitions/user.LoginRequest'
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/user.Presenter'
-      summary: Create a new user
+            $ref: '#/definitions/user.LoginResponse'
+      summary: Login user
       tags:
       - user
   /user/password:
@@ -184,6 +259,28 @@ paths:
         "200":
           description: OK
       summary: Update user password
+      tags:
+      - user
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the data provided in the request
+      parameters:
+      - description: RegisterRequest data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.Presenter'
+      summary: Create a new user
       tags:
       - user
 swagger: "2.0"

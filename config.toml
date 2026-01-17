@@ -12,6 +12,13 @@ logging = true
 log_level = "debug"
 log_format = "${remote_ip} [${time_rfc3339}] \"${method} ${uri} ${protocol}\" ${status} ${bytes_out} ${user_agent}\n"
 
+[auth]
+jwt_secret = "your-secret-key-change-in-production"
+jwt_expiration_min = 60
+google_client_id = ""
+google_client_secret = ""
+google_redirect_url = "http://localhost:8080/api/auth/google/callback"
+
 [database]
 host = "localhost"
 port = 5432

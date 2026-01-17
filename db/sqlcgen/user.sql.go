@@ -7,23 +7,58 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
+const createOAuthUser = `-- name: CreateOAuthUser :one
+INSERT INTO users (id, created_at, updated_at, email, google_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, created_at, updated_at, email, password, google_id
+`
+
+type CreateOAuthUserParams struct {
+	ID        uuid.UUID      `json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Email     string         `json:"email"`
+	GoogleID  sql.NullString `json:"google_id"`
+}
+
+func (q *Queries) CreateOAuthUser(ctx context.Context, arg CreateOAuthUserParams) (*User, error) {
+	row := q.db.QueryRowContext(ctx, createOAuthUser,
+		arg.ID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Email,
+		arg.GoogleID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.Password,
+		&i.GoogleID,
+	)
+	return &i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, email, password)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, created_at, updated_at, email, password
+RETURNING id, created_at, updated_at, email, password, google_id
 `
 
 type CreateUserParams struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	ID        uuid.UUID      `json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Email     string         `json:"email"`
+	Password  sql.NullString `json:"password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
@@ -41,6 +76,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.UpdatedAt,
 		&i.Email,
 		&i.Password,
+		&i.GoogleID,
 	)
 	return &i, err
 }
@@ -55,7 +91,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const findAllUsers = `-- name: FindAllUsers :many
-SELECT id, created_at, updated_at, email, password FROM users ORDER BY created_at DESC
+SELECT id, created_at, updated_at, email, password, google_id FROM users ORDER BY created_at DESC
 `
 
 func (q *Queries) FindAllUsers(ctx context.Context) ([]*User, error) {
@@ -73,6 +109,7 @@ func (q *Queries) FindAllUsers(ctx context.Context) ([]*User, error) {
 			&i.UpdatedAt,
 			&i.Email,
 			&i.Password,
+			&i.GoogleID,
 		); err != nil {
 			return nil, err
 		}
@@ -88,7 +125,7 @@ func (q *Queries) FindAllUsers(ctx context.Context) ([]*User, error) {
 }
 
 const findUserByEmail = `-- name: FindUserByEmail :one
-SELECT id, created_at, updated_at, email, password FROM users WHERE email = $1
+SELECT id, created_at, updated_at, email, password, google_id FROM users WHERE email = $1
 `
 
 func (q *Queries) FindUserByEmail(ctx context.Context, email string) (*User, error) {
@@ -100,12 +137,31 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (*User, err
 		&i.UpdatedAt,
 		&i.Email,
 		&i.Password,
+		&i.GoogleID,
+	)
+	return &i, err
+}
+
+const findUserByGoogleID = `-- name: FindUserByGoogleID :one
+SELECT id, created_at, updated_at, email, password, google_id FROM users WHERE google_id = $1
+`
+
+func (q *Queries) FindUserByGoogleID(ctx context.Context, googleID sql.NullString) (*User, error) {
+	row := q.db.QueryRowContext(ctx, findUserByGoogleID, googleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.Password,
+		&i.GoogleID,
 	)
 	return &i, err
 }
 
 const findUserByID = `-- name: FindUserByID :one
-SELECT id, created_at, updated_at, email, password FROM users WHERE id = $1
+SELECT id, created_at, updated_at, email, password, google_id FROM users WHERE id = $1
 `
 
 func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
@@ -117,6 +173,7 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 		&i.UpdatedAt,
 		&i.Email,
 		&i.Password,
+		&i.GoogleID,
 	)
 	return &i, err
 }
@@ -128,10 +185,10 @@ WHERE id = $1
 `
 
 type UpdateUserParams struct {
-	ID        uuid.UUID `json:"id"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	ID        uuid.UUID      `json:"id"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Email     string         `json:"email"`
+	Password  sql.NullString `json:"password"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
@@ -141,5 +198,19 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Email,
 		arg.Password,
 	)
+	return err
+}
+
+const updateUserGoogleID = `-- name: UpdateUserGoogleID :exec
+UPDATE users SET google_id = $1, updated_at = NOW() WHERE id = $2
+`
+
+type UpdateUserGoogleIDParams struct {
+	GoogleID sql.NullString `json:"google_id"`
+	ID       uuid.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateUserGoogleID(ctx context.Context, arg UpdateUserGoogleIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserGoogleID, arg.GoogleID, arg.ID)
 	return err
 }

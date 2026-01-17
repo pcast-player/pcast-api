@@ -13,7 +13,8 @@ type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Email     string
-	Password  string
+	Password  *string // Nullable for OAuth-only users
+	GoogleID  *string // Google OAuth subject ID
 }
 
 func (u *User) SetID(id uuid.UUID) {

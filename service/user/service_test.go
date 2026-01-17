@@ -3,13 +3,20 @@ package user
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
 	store "pcast-api/store/user"
-	"testing"
 )
+
+// Helper function to create a pointer to a string
+func strPtr(s string) *string {
+	return &s
+}
 
 type mockStore struct {
 	user *store.User
@@ -40,8 +47,20 @@ func (m *mockStore) Delete(ctx context.Context, user *store.User) error {
 	return m.err
 }
 
+func (m *mockStore) FindByGoogleID(ctx context.Context, googleID string) (*store.User, error) {
+	return m.user, m.err
+}
+
+func (m *mockStore) UpdateGoogleID(ctx context.Context, userID uuid.UUID, googleID string) error {
+	return m.err
+}
+
+func (m *mockStore) CreateOAuthUser(ctx context.Context, user *store.User) error {
+	return m.err
+}
+
 func TestService_GetUser(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -51,7 +70,7 @@ func TestService_GetUser(t *testing.T) {
 }
 
 func TestService_GetUsers(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -61,7 +80,7 @@ func TestService_GetUsers(t *testing.T) {
 }
 
 func TestService_CreateUser(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -71,7 +90,7 @@ func TestService_CreateUser(t *testing.T) {
 }
 
 func TestService_UpdateUser(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -80,7 +99,7 @@ func TestService_UpdateUser(t *testing.T) {
 }
 
 func TestService_DeleteUser(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -89,7 +108,7 @@ func TestService_DeleteUser(t *testing.T) {
 }
 
 func TestService_DeleteUser_Error(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user, err: assert.AnError}
 	service := NewService(s, "testsecret", 10)
 
@@ -98,7 +117,7 @@ func TestService_DeleteUser_Error(t *testing.T) {
 }
 
 func TestService_CreateUser_Error(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user, err: assert.AnError}
 	service := NewService(s, "testsecret", 10)
 
@@ -107,7 +126,7 @@ func TestService_CreateUser_Error(t *testing.T) {
 }
 
 func TestService_UpdateUser_Error(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user, err: assert.AnError}
 	service := NewService(s, "testsecret", 10)
 
@@ -116,7 +135,7 @@ func TestService_UpdateUser_Error(t *testing.T) {
 }
 
 func TestService_GetUser_Error(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user, err: assert.AnError}
 	service := NewService(s, "testsecret", 10)
 
@@ -125,7 +144,7 @@ func TestService_GetUser_Error(t *testing.T) {
 }
 
 func TestService_GetUsers_Error(t *testing.T) {
-	user := &store.User{Email: "foo@bar.com", Password: "password"}
+	user := &store.User{Email: "foo@bar.com", Password: strPtr("password")}
 	s := &mockStore{user: user, err: assert.AnError}
 	service := NewService(s, "testsecret", 10)
 
@@ -141,7 +160,7 @@ func TestService_Login(t *testing.T) {
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	assert.NoError(t, err)
 
-	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: &hash}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -183,11 +202,25 @@ func TestService_Login_WrongPassword(t *testing.T) {
 	hash, err := argon2id.CreateHash("correctpassword", argon2id.DefaultParams)
 	assert.NoError(t, err)
 
-	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: &hash}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
 	tokenString, err := service.Login(context.Background(), user.Email, "wrongpassword")
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidPassword, err)
+	assert.Empty(t, tokenString)
+}
+
+func TestService_Login_OAuthUserNoPassword(t *testing.T) {
+	userID := uuid.Must(uuid.NewV7())
+
+	// OAuth user has no password
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: nil, GoogleID: strPtr("google123")}
+	s := &mockStore{user: user}
+	service := NewService(s, "testsecret", 10)
+
+	tokenString, err := service.Login(context.Background(), user.Email, "anypassword")
 	assert.Error(t, err)
 	assert.Equal(t, ErrInvalidPassword, err)
 	assert.Empty(t, tokenString)
@@ -201,7 +234,7 @@ func TestService_UpdatePassword(t *testing.T) {
 	hash, err := argon2id.CreateHash(oldPassword, argon2id.DefaultParams)
 	assert.NoError(t, err)
 
-	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: &hash}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -209,7 +242,7 @@ func TestService_UpdatePassword(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify the password was updated
-	match, err := argon2id.ComparePasswordAndHash(newPassword, user.Password)
+	match, err := argon2id.ComparePasswordAndHash(newPassword, *user.Password)
 	assert.NoError(t, err)
 	assert.True(t, match)
 }
@@ -220,7 +253,7 @@ func TestService_UpdatePassword_WrongOldPassword(t *testing.T) {
 	hash, err := argon2id.CreateHash("correctpassword", argon2id.DefaultParams)
 	assert.NoError(t, err)
 
-	user := &store.User{ID: userID, Email: "foo@bar.com", Password: hash}
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: &hash}
 	s := &mockStore{user: user}
 	service := NewService(s, "testsecret", 10)
 
@@ -236,4 +269,17 @@ func TestService_UpdatePassword_UserNotFound(t *testing.T) {
 	err := service.UpdatePassword(context.Background(), uuid.Must(uuid.NewV7()), "old", "new")
 	assert.Error(t, err)
 	assert.Equal(t, ErrUserNotFound, err)
+}
+
+func TestService_UpdatePassword_OAuthUserNoPassword(t *testing.T) {
+	userID := uuid.Must(uuid.NewV7())
+
+	// OAuth user has no password
+	user := &store.User{ID: userID, Email: "foo@bar.com", Password: nil, GoogleID: strPtr("google123")}
+	s := &mockStore{user: user}
+	service := NewService(s, "testsecret", 10)
+
+	err := service.UpdatePassword(context.Background(), userID, "old", "new")
+	assert.Error(t, err)
+	assert.Equal(t, ErrNoPassword, err)
 }

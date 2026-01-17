@@ -3,17 +3,20 @@ package user
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
 	modelInterface "pcast-api/service/model_interface"
 	store "pcast-api/store/user"
-	"time"
 )
 
 var (
 	ErrInvalidPassword = errors.New("invalid password")
 	ErrUserNotFound    = errors.New("user not found")
+	ErrNoPassword      = errors.New("user has no password (OAuth account)")
 )
 
 type Service struct {
@@ -46,7 +49,7 @@ func (s *Service) CreateUser(ctx context.Context, email, password string) (*stor
 
 	user := &store.User{
 		Email:    email,
-		Password: hash,
+		Password: &hash,
 	}
 
 	err = s.store.Create(ctx, user)
@@ -67,7 +70,12 @@ func (s *Service) UpdatePassword(ctx context.Context, userID uuid.UUID, oldPassw
 		return err
 	}
 
-	match, err := argon2id.ComparePasswordAndHash(oldPassword, user.Password)
+	// Check if user has a password (OAuth-only users don't)
+	if user.Password == nil {
+		return ErrNoPassword
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(oldPassword, *user.Password)
 	if err != nil {
 		return err
 	}
@@ -80,7 +88,7 @@ func (s *Service) UpdatePassword(ctx context.Context, userID uuid.UUID, oldPassw
 		return err
 	}
 
-	user.Password = hash
+	user.Password = &hash
 	return s.store.Update(ctx, user)
 }
 
@@ -99,7 +107,12 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", ErrInvalidPassword // Return generic error for security
 	}
 
-	match, err := argon2id.ComparePasswordAndHash(password, u.Password)
+	// Check if user has a password (OAuth-only users can't login with password)
+	if u.Password == nil {
+		return "", ErrInvalidPassword
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(password, *u.Password)
 	if err != nil {
 		return "", err
 	}

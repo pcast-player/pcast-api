@@ -16,6 +16,11 @@ var us *Store
 
 const testDSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
 
+// Helper function to create a pointer to a string
+func strPtr(s string) *string {
+	return &s
+}
+
 func TestMain(m *testing.M) {
 	setup()
 
@@ -50,10 +55,12 @@ func runMigrations() {
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			email VARCHAR(255) UNIQUE NOT NULL,
-			password VARCHAR(255) NOT NULL
+			password VARCHAR(255),
+			google_id VARCHAR(255) UNIQUE
 		)
 	`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`)
 }
 
 func truncateTable() {
@@ -65,7 +72,7 @@ func truncateTable() {
 }
 
 func TestCreateUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: "password"}
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -73,7 +80,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestFindUserByID(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: "password"}
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -86,7 +93,7 @@ func TestFindUserByID(t *testing.T) {
 }
 
 func TestFindUserByEmail(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: "password"}
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -98,7 +105,7 @@ func TestFindUserByEmail(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: "password"}
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -109,7 +116,7 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: "password"}
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 
 	assert.NoError(t, err)
@@ -120,6 +127,46 @@ func TestUpdateUser(t *testing.T) {
 	foundUser, err := us.FindByID(context.Background(), user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
+
+	truncateTable()
+}
+
+func TestCreateOAuthUser(t *testing.T) {
+	user := &User{Email: "oauth@bar.com", GoogleID: strPtr("google123")}
+	err := us.CreateOAuthUser(context.Background(), user)
+	assert.NoError(t, err)
+	assert.Nil(t, user.Password)
+
+	truncateTable()
+}
+
+func TestFindUserByGoogleID(t *testing.T) {
+	googleID := "google123"
+	user := &User{Email: "oauth@bar.com", GoogleID: &googleID}
+	err := us.CreateOAuthUser(context.Background(), user)
+	assert.NoError(t, err)
+
+	foundUser, err := us.FindByGoogleID(context.Background(), googleID)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Email, foundUser.Email)
+	assert.Equal(t, googleID, *foundUser.GoogleID)
+
+	truncateTable()
+}
+
+func TestUpdateGoogleID(t *testing.T) {
+	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	err := us.Create(context.Background(), user)
+	assert.NoError(t, err)
+
+	googleID := "google456"
+	err = us.UpdateGoogleID(context.Background(), user.ID, googleID)
+	assert.NoError(t, err)
+
+	foundUser, err := us.FindByGoogleID(context.Background(), googleID)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Email, foundUser.Email)
+	assert.Equal(t, googleID, *foundUser.GoogleID)
 
 	truncateTable()
 }

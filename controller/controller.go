@@ -3,13 +3,16 @@ package controller
 import (
 	"database/sql"
 
-	"github.com/labstack/echo-jwt/v4"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+
 	"pcast-api/config"
 	"pcast-api/controller/feed"
+	"pcast-api/controller/oauth"
 	"pcast-api/controller/user"
 	authMiddleware "pcast-api/middleware/auth"
 	feedService "pcast-api/service/feed"
+	oauthService "pcast-api/service/oauth"
 	userService "pcast-api/service/user"
 	feedStore "pcast-api/store/feed"
 	userStore "pcast-api/store/user"
@@ -36,6 +39,7 @@ func NewController(config *config.Config, db *sql.DB, g *echo.Group) {
 
 	newFeedHandler(db, protected, middleware)
 	newUserHandler(config, db, g, protected, middleware)
+	newOAuthHandler(config, db, g)
 }
 
 func newFeedHandler(db *sql.DB, g *echo.Group, middleware *authMiddleware.JWTMiddleware) {
@@ -52,4 +56,12 @@ func newUserHandler(config *config.Config, db *sql.DB, public *echo.Group, prote
 	handler := user.NewHandler(service, middleware)
 
 	handler.Register(public, protected)
+}
+
+func newOAuthHandler(config *config.Config, db *sql.DB, public *echo.Group) {
+	store := userStore.New(db)
+	service := oauthService.NewService(config, store)
+	handler := oauth.NewHandler(service)
+
+	handler.Register(public)
 }

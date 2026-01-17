@@ -17,8 +17,11 @@ type Config struct {
 }
 
 type Auth struct {
-	JwtSecret        string `toml:"jwt_secret"`
-	JwtExpirationMin int    `toml:"jwt_expiration_min"`
+	JwtSecret          string `toml:"jwt_secret"`
+	JwtExpirationMin   int    `toml:"jwt_expiration_min"`
+	GoogleClientID     string `toml:"google_client_id"`
+	GoogleClientSecret string `toml:"google_client_secret"`
+	GoogleRedirectURL  string `toml:"google_redirect_url"`
 }
 
 type Server struct {
