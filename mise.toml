@@ -1,5 +1,5 @@
 [tools]
-go = "1.24.0"
+go = "1.25.6"
 
 [env]
 DB_DSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast sslmode=disable"

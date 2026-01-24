@@ -1,6 +1,6 @@
 module pcast-api
 
-go 1.24.0
+go 1.25.6
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
