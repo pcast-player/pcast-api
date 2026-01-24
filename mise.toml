@@ -1,0 +1,71 @@
+[tools]
+go = "1.24.0"
+
+[env]
+DB_DSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast sslmode=disable"
+TEST_DB_DSN = "host=localhost port=5432 user=pcast password=pcast dbname=pcast_test sslmode=disable"
+
+[tasks.default]
+description = "Install dependencies and build"
+depends = ["install", "build"]
+
+[tasks.install]
+description = "Install dependencies and tools (swag, goose, sqlc)"
+run = """
+go mod download
+go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/pressly/goose/v3/cmd/goose@latest
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+"""
+
+[tasks.build]
+description = "Build with race detector"
+run = "go build -o target/ -race ."
+
+[tasks.test]
+description = "Run all tests with race detector"
+run = "go test -v -race ./..."
+
+[tasks.run]
+description = "Run the API server"
+run = "go run -race ."
+
+[tasks.docs]
+description = "Generate Swagger documentation"
+run = "swag init --parseDependency --parseInternal"
+
+[tasks.sqlc]
+description = "Generate sqlc code"
+run = "sqlc generate"
+
+# Database migration tasks
+[tasks."migrate:up"]
+description = "Run database migrations"
+run = "goose postgres \"$DB_DSN\" up"
+dir = "db/migrations"
+
+[tasks."migrate:down"]
+description = "Rollback last migration"
+run = "goose postgres \"$DB_DSN\" down"
+dir = "db/migrations"
+
+[tasks."migrate:status"]
+description = "Check migration status"
+run = "goose postgres \"$DB_DSN\" status"
+dir = "db/migrations"
+
+[tasks."migrate:create"]
+description = "Create a new migration (usage: mise run migrate:create name=migration_name)"
+run = "goose create {{arg(name=\"name\")}} sql"
+dir = "db/migrations"
+
+# Test database migration tasks
+[tasks."migrate:test:up"]
+description = "Run test database migrations"
+run = "goose postgres \"$TEST_DB_DSN\" up"
+dir = "db/migrations"
+
+[tasks."migrate:test:down"]
+description = "Rollback test database migrations"
+run = "goose postgres \"$TEST_DB_DSN\" down"
+dir = "db/migrations"

@@ -10,16 +10,16 @@ PCast API is a podcast player backend written in Go 1.22+ using the Echo framewo
 
 ```bash
 # Common commands
-make install         # Install dependencies, swag, goose, sqlc
-make build           # Build with race detector
-make run             # Run the API server
-make test            # Run all tests with race detector
-make create-docs     # Generate Swagger documentation
+mise run install         # Install dependencies, swag, goose, sqlc
+mise run build           # Build with race detector
+mise run run             # Run the API server
+mise run test            # Run all tests with race detector
+mise run docs            # Generate Swagger documentation
 
 # Database migrations
-make migrate-up      # Run database migrations
-make migrate-status  # Check migration status
-make sqlc-generate   # Generate sqlc code
+mise run migrate:up      # Run database migrations
+mise run migrate:status  # Check migration status
+mise run sqlc            # Generate sqlc code
 
 # Run a single test
 go test -v -race ./service/user -run TestService_GetUser
@@ -32,7 +32,7 @@ go test -v -race -cover ./...
 
 ### Installation
 ```bash
-make install          # Download dependencies and install tools (swag, goose, sqlc)
+mise run install      # Download dependencies and install tools (swag, goose, sqlc)
 go mod download       # Download dependencies only
 ```
 
@@ -43,13 +43,13 @@ go mod download       # Download dependencies only
 
 ### Building
 ```bash
-make build           # Build with race detector to target/
+mise run build       # Build with race detector to target/
 go build -o target/ -race .
 ```
 
 ### Running
 ```bash
-make run             # Run with race detector
+mise run run         # Run with race detector
 go run -race .       # Alternative: run directly
 ```
 
@@ -59,7 +59,7 @@ The API starts at http://localhost:8080 with Swagger docs at http://localhost:80
 
 ```bash
 # Run all tests
-make test            # Run all tests with race detector
+mise run test        # Run all tests with race detector
 go test -v -race ./...
 
 # Run tests with coverage
@@ -77,27 +77,27 @@ go test -v -race ./store/feed -run TestStore_Create
 
 ### Documentation
 ```bash
-make create-docs     # Generate Swagger docs with swag init
+mise run docs        # Generate Swagger docs with swag init
 ```
 
 ### Database Migrations
 ```bash
 # Run migrations
-make migrate-up          # Apply all pending migrations
-make migrate-down        # Rollback last migration
-make migrate-status      # Check migration status
+mise run migrate:up              # Apply all pending migrations
+mise run migrate:down            # Rollback last migration
+mise run migrate:status          # Check migration status
 
 # Create new migration
-make migrate-create name=add_new_feature
+mise run migrate:create name=add_new_feature
 
 # Test database migrations
-make test-migrate-up     # Apply migrations to test database
-make test-migrate-down   # Rollback test database migrations
+mise run migrate:test:up         # Apply migrations to test database
+mise run migrate:test:down       # Rollback test database migrations
 ```
 
 ### Generate sqlc Code
 ```bash
-make sqlc-generate    # Generate type-safe Go code from SQL queries
+mise run sqlc         # Generate type-safe Go code from SQL queries
 sqlc generate         # Alternative: run directly
 ```
 
@@ -540,7 +540,7 @@ db/
 
 ### Adding New Queries
 1. Write SQL in `db/queries/{domain}.sql` with sqlc annotations
-2. Run `make sqlc-generate` to generate Go code
+2. Run `mise run sqlc` to generate Go code
 3. Use generated code in store layer
 
 **Example query:**
@@ -557,11 +557,11 @@ user, err := s.queries.FindUserByEmail(context.Background(), email)
 ### Creating Migrations
 ```bash
 # Create new migration
-make migrate-create name=add_user_avatar
+mise run migrate:create name=add_user_avatar
 
 # Edit the generated SQL file in db/migrations/
 # Run migration
-make migrate-up
+mise run migrate:up
 ```
 
 ### Store Layer Pattern with sqlc
@@ -600,7 +600,7 @@ func (s *Store) Create(feed *Feed) error {
 - Use pointer types for nullable database fields
 - Call `truncateTable()` after each test to clean data
 - Enable race detector in tests: `-race` flag
-- Don't forget to regenerate Swagger docs after API changes: `make create-docs`
+- Don't forget to regenerate Swagger docs after API changes: `mise run docs`
 - Import domain stores with appropriate aliases to avoid conflicts
 - **sqlc**: Don't manually edit files in `db/sqlcgen/` - always regenerate
 - **Migrations**: Always create both Up and Down migrations
