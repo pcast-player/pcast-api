@@ -21,7 +21,7 @@ The API uses the Echo Framework, sqlc for type-safe SQL, and PostgreSQL as datab
 1. Check out the repository and install the dependencies:
 
 ```bash
-make install
+mise run install
 ```
 
 This will:
@@ -47,7 +47,7 @@ docker exec pcast-api-db-1 psql -U pcast -c "CREATE DATABASE pcast_test;"
 4. Run database migrations:
 
 ```bash
-make migrate-up
+mise run migrate:up
 ```
 
 ### Running
@@ -55,7 +55,7 @@ make migrate-up
 Run the API server:
 
 ```bash
-make run
+mise run run
 ```
 
 Or directly:
@@ -73,7 +73,7 @@ There is also an API documentation available at http://localhost:8080/swagger/.
 Run all tests:
 
 ```bash
-make test
+mise run test
 ```
 
 Or with coverage:
@@ -100,15 +100,15 @@ go test -v -race ./service/user -run TestService_GetUser
 Create a new migration:
 
 ```bash
-make migrate-create name=add_new_feature
+mise run migrate:create name=add_new_feature
 ```
 
 Run migrations:
 
 ```bash
-make migrate-up       # Apply all pending migrations
-make migrate-down     # Rollback last migration
-make migrate-status   # Check migration status
+mise run migrate:up       # Apply all pending migrations
+mise run migrate:down     # Rollback last migration
+mise run migrate:status   # Check migration status
 ```
 
 ### Code Generation
@@ -116,5 +116,5 @@ make migrate-status   # Check migration status
 After modifying SQL queries in `db/queries/`, regenerate the Go code:
 
 ```bash
-make sqlc-generate
+mise run sqlc
 ```
