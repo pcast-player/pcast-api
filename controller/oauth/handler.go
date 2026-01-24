@@ -95,7 +95,7 @@ func (h *Handler) handleGoogleCallback(c echo.Context) error {
 		MaxAge:   -1,
 	})
 
-	token, err := h.service.HandleGoogleCallback(c.Request().Context(), code, state)
+	token, err := h.service.HandleGoogleCallback(c.Request().Context(), code)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": err.Error(),

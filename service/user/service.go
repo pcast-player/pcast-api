@@ -3,12 +3,11 @@ package user
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
+	"pcast-api/service/auth"
 	modelInterface "pcast-api/service/model_interface"
 	store "pcast-api/store/user"
 )
@@ -120,21 +119,5 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", ErrInvalidPassword
 	}
 
-	return s.createJwtToken(u)
-}
-
-func (s *Service) createJwtToken(user *store.User) (string, error) {
-	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.jwtExpirationMin) * time.Minute)),
-		Subject:   user.ID.String(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString([]byte(s.jwtSecret))
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+	return auth.CreateJWTToken(u.ID, s.jwtSecret, s.jwtExpirationMin)
 }
