@@ -19,3 +19,14 @@ WHERE id = $1;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
+
+-- name: FindUserByGoogleID :one
+SELECT * FROM users WHERE google_id = $1;
+
+-- name: UpdateUserGoogleID :exec
+UPDATE users SET google_id = $1, updated_at = NOW() WHERE id = $2;
+
+-- name: CreateOAuthUser :one
+INSERT INTO users (id, created_at, updated_at, email, google_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;

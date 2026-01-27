@@ -42,10 +42,14 @@ func truncateTables() {
 }
 
 func createUser(t *testing.T) (uuid.UUID, string) {
+	// Use unique email per test to avoid conflicts with parallel test execution
+	email := fmt.Sprintf("feed-test-%s@example.com", uuid.New().String()[:8])
+	jsonBody := fmt.Sprintf(`{"email": "%s", "password": "test"}`, email)
+
 	result := apitest.New().
 		Handler(newApp()).
 		Post("/api/user/register").
-		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		JSON(jsonBody).
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
@@ -55,7 +59,7 @@ func createUser(t *testing.T) (uuid.UUID, string) {
 	loginResult := apitest.New().
 		Handler(newApp()).
 		Post("/api/user/login").
-		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		JSON(jsonBody).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -66,6 +70,7 @@ func createUser(t *testing.T) (uuid.UUID, string) {
 }
 
 func TestGetFeeds(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	apitest.New().
@@ -76,11 +81,10 @@ func TestGetFeeds(t *testing.T) {
 		Assert(jsonpath.Len("$", 0)).
 		Status(http.StatusOK).
 		End()
-
-	truncateTables()
 }
 
 func TestCreateFeed(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	apitest.New().
@@ -100,11 +104,10 @@ func TestCreateFeed(t *testing.T) {
 		Assert(jsonpath.Len("$", 1)).
 		Status(http.StatusOK).
 		End()
-
-	truncateTables()
 }
 
 func TestCreateFeedPropertyNameError(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	apitest.New().
@@ -115,11 +118,10 @@ func TestCreateFeedPropertyNameError(t *testing.T) {
 		Expect(t).
 		Status(http.StatusBadRequest).
 		End()
-
-	truncateTables()
 }
 
 func TestCreateFeedMissingPropertyError(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	apitest.New().
@@ -130,11 +132,10 @@ func TestCreateFeedMissingPropertyError(t *testing.T) {
 		Expect(t).
 		Status(http.StatusBadRequest).
 		End()
-
-	truncateTables()
 }
 
 func TestCreateFeedUrlValidationError(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	apitest.New().
@@ -145,11 +146,10 @@ func TestCreateFeedUrlValidationError(t *testing.T) {
 		Expect(t).
 		Status(http.StatusBadRequest).
 		End()
-
-	truncateTables()
 }
 
 func TestDeleteFeed(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	result := apitest.New().
@@ -188,11 +188,10 @@ func TestDeleteFeed(t *testing.T) {
 		Assert(jsonpath.Len("$", 0)).
 		Status(http.StatusOK).
 		End()
-
-	truncateTables()
 }
 
 func TestUpdateFeed(t *testing.T) {
+	t.Cleanup(truncateTables)
 	_, token := createUser(t)
 
 	result := apitest.New().
@@ -223,6 +222,4 @@ func TestUpdateFeed(t *testing.T) {
 		Assert(jsonpath.NotEqual("$[0].syncedAt", nil)).
 		Status(http.StatusOK).
 		End()
-
-	truncateTables()
 }

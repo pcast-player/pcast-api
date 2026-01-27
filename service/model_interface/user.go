@@ -11,6 +11,9 @@ type User interface {
 	Create(ctx context.Context, user *user.User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*user.User, error)
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
+	FindByGoogleID(ctx context.Context, googleID string) (*user.User, error)
 	Delete(ctx context.Context, user *user.User) error
 	Update(ctx context.Context, user *user.User) error
+	UpdateGoogleID(ctx context.Context, userID uuid.UUID, googleID string) error
+	CreateOAuthUser(ctx context.Context, user *user.User) error
 }
