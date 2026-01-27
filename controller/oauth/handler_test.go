@@ -9,14 +9,16 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+
+	oauthService "pcast-api/service/oauth"
 )
 
 // mockOAuthService implements serviceInterface.OAuth for testing
 type mockOAuthService struct {
-	authURL      string
-	authURLErr   error
+	authURL       string
+	authURLErr    error
 	callbackToken string
-	callbackErr  error
+	callbackErr   error
 }
 
 func (m *mockOAuthService) GetGoogleAuthURL(state string) (string, error) {
@@ -70,7 +72,7 @@ func TestHandler_InitiateGoogleAuth_NotConfigured(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	mockService := &mockOAuthService{
-		authURLErr: ErrGoogleNotConfigured,
+		authURLErr: oauthService.ErrGoogleNotConfigured,
 	}
 	handler := NewHandler(mockService)
 
