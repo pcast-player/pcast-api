@@ -1,12 +1,15 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/steinfletcher/apitest"
+
 	"pcast-api/controller/user"
 	testhelper "pcast-api/integration_test/testhelper"
 )
@@ -38,22 +41,28 @@ func truncateTable() {
 }
 
 func TestCreateUser(t *testing.T) {
+	t.Cleanup(truncateTable)
+	email := fmt.Sprintf("user-create-%s@example.com", uuid.New().String()[:8])
+	jsonBody := fmt.Sprintf(`{"email": "%s", "password": "test"}`, email)
+
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/user/register").
-		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		JSON(jsonBody).
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
-
-	truncateTable()
 }
 
 func TestUpdatePassword(t *testing.T) {
+	t.Cleanup(truncateTable)
+	email := fmt.Sprintf("user-password-%s@example.com", uuid.New().String()[:8])
+	jsonBody := fmt.Sprintf(`{"email": "%s", "password": "test"}`, email)
+
 	apitest.New().
 		Handler(newApp()).
 		Post("/api/user/register").
-		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		JSON(jsonBody).
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
@@ -62,7 +71,7 @@ func TestUpdatePassword(t *testing.T) {
 	loginResult := apitest.New().
 		Handler(newApp()).
 		Post("/api/user/login").
-		JSON(`{"email": "foo@bar.com", "password": "test"}`).
+		JSON(jsonBody).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -77,6 +86,4 @@ func TestUpdatePassword(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
-
-	truncateTable()
 }

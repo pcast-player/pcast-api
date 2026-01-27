@@ -37,6 +37,9 @@ func setup() {
 	// Run migrations
 	runMigrations()
 
+	// Truncate tables before running tests to ensure clean state
+	truncateTable()
+
 	us = New(d)
 }
 
@@ -72,15 +75,17 @@ func truncateTable() {
 }
 
 func TestCreateUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "create@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
-
-	truncateTable()
 }
 
 func TestFindUserByID(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "findbyid@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -88,61 +93,61 @@ func TestFindUserByID(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
-
-	truncateTable()
 }
 
 func TestFindUserByEmail(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "findbyemail@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
 	foundUser, err := us.FindByEmail(context.Background(), user.Email)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
-
-	truncateTable()
 }
 
 func TestDeleteUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "delete@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
 	err = us.Delete(context.Background(), user)
 	assert.NoError(t, err)
-
-	truncateTable()
 }
 
 func TestUpdateUser(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "update@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 
 	assert.NoError(t, err)
-	user.Email = "bar@foo.com"
+	user.Email = "updated@test.com"
 	err = us.Update(context.Background(), user)
 	assert.NoError(t, err)
 
 	foundUser, err := us.FindByID(context.Background(), user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
-
-	truncateTable()
 }
 
 func TestCreateOAuthUser(t *testing.T) {
-	user := &User{Email: "oauth@bar.com", GoogleID: strPtr("google123")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "oauth@test.com", GoogleID: strPtr("google123")}
 	err := us.CreateOAuthUser(context.Background(), user)
 	assert.NoError(t, err)
 	assert.Nil(t, user.Password)
-
-	truncateTable()
 }
 
 func TestFindUserByGoogleID(t *testing.T) {
-	googleID := "google123"
-	user := &User{Email: "oauth@bar.com", GoogleID: &googleID}
+	t.Cleanup(truncateTable)
+
+	googleID := "google-find-123"
+	user := &User{Email: "oauth-find@test.com", GoogleID: &googleID}
 	err := us.CreateOAuthUser(context.Background(), user)
 	assert.NoError(t, err)
 
@@ -150,16 +155,16 @@ func TestFindUserByGoogleID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
 	assert.Equal(t, googleID, *foundUser.GoogleID)
-
-	truncateTable()
 }
 
 func TestUpdateGoogleID(t *testing.T) {
-	user := &User{Email: "foo@bar.com", Password: strPtr("password")}
+	t.Cleanup(truncateTable)
+
+	user := &User{Email: "update-google@test.com", Password: strPtr("password")}
 	err := us.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	googleID := "google456"
+	googleID := "google-update-456"
 	err = us.UpdateGoogleID(context.Background(), user.ID, googleID)
 	assert.NoError(t, err)
 
@@ -167,6 +172,4 @@ func TestUpdateGoogleID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, user.Email, foundUser.Email)
 	assert.Equal(t, googleID, *foundUser.GoogleID)
-
-	truncateTable()
 }

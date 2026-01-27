@@ -23,8 +23,8 @@ description = "Build with race detector"
 run = "go build -o target/ -race ."
 
 [tasks.test]
-description = "Run all tests with race detector"
-run = "go test -v -race ./..."
+description = "Run all tests with race detector (sequential to avoid DB conflicts)"
+run = "go test -v -race -p 1 ./..."
 
 [tasks.run]
 description = "Run the API server"
