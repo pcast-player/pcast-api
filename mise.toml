@@ -69,3 +69,45 @@ dir = "db/migrations"
 description = "Rollback test database migrations"
 run = "goose postgres \"$TEST_DB_DSN\" down"
 dir = "db/migrations"
+
+# Test database setup tasks
+[tasks."db:start"]
+description = "Start PostgreSQL container"
+run = "docker compose up -d db"
+dir = "docker"
+
+[tasks."db:stop"]
+description = "Stop PostgreSQL container"
+run = "docker compose down"
+dir = "docker"
+
+[tasks."db:test:create"]
+description = "Create test database (requires PostgreSQL to be running)"
+run = """
+docker exec pcast-api-db-1 psql -U pcast -tc "SELECT 1 FROM pg_database WHERE datname = 'pcast_test'" | grep -q 1 || \
+docker exec pcast-api-db-1 psql -U pcast -c "CREATE DATABASE pcast_test"
+"""
+
+[tasks."db:test:drop"]
+description = "Drop test database"
+run = "docker exec pcast-api-db-1 psql -U pcast -c \"DROP DATABASE IF EXISTS pcast_test\""
+
+[tasks."db:test:setup"]
+description = "Setup test database (start db, create test db, run migrations)"
+depends = ["db:start"]
+run = """
+echo "Waiting for PostgreSQL to be ready..."
+sleep 2
+mise run db:test:create
+mise run migrate:test:up
+echo "Test database setup complete!"
+"""
+
+[tasks."db:test:reset"]
+description = "Reset test database (drop, create, migrate)"
+run = """
+mise run db:test:drop
+mise run db:test:create
+mise run migrate:test:up
+echo "Test database reset complete!"
+"""
