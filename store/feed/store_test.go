@@ -52,7 +52,7 @@ func tearDown() {
 func runMigrations() {
 	// NOTE: In CI, goose migrations are run before tests.
 	// These CREATE TABLE statements exist to support local runs.
-	// Keep users table available so FK constraints won't fail.
+	// Use CREATE IF NOT EXISTS to avoid races with parallel test packages.
 
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
@@ -60,10 +60,15 @@ func runMigrations() {
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			email VARCHAR(255) UNIQUE NOT NULL,
-			password VARCHAR(255) NOT NULL
+			password VARCHAR(255),
+			google_id VARCHAR(255) UNIQUE
 		)
 	`)
+	// Ensure columns added by later migrations exist
+	d.Exec(`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`)
+	d.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
+	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`)
 
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
@@ -94,13 +99,10 @@ func runMigrations() {
 }
 
 func truncateTable() {
-	// If FK exists (feeds.user_id -> users.id), truncate users CASCADE clears feeds.
-	// Also explicitly truncate feeds for local runs without FK.
-	if _, err := d.Exec("TRUNCATE TABLE feeds"); err != nil {
-		log.Printf("Failed to truncate feeds: %v", err)
-	}
-	if _, err := d.Exec("TRUNCATE TABLE users CASCADE"); err != nil {
-		log.Printf("Failed to truncate users: %v", err)
+	// Only delete feeds; do not touch users to avoid interfering with
+	// the store/user package tests that run in parallel.
+	if _, err := d.Exec("DELETE FROM feeds"); err != nil {
+		log.Printf("Failed to delete feeds: %v", err)
 	}
 }
 
