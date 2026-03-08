@@ -43,6 +43,11 @@ func Teardown() {
 }
 
 func RunMigrations() {
+	// Drop and recreate tables to ensure schema is always up to date
+	DB.Exec(`DROP TABLE IF EXISTS episodes CASCADE`)
+	DB.Exec(`DROP TABLE IF EXISTS feeds CASCADE`)
+	DB.Exec(`DROP TABLE IF EXISTS users CASCADE`)
+
 	_, err := DB.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,

@@ -50,8 +50,8 @@ func tearDown() {
 }
 
 func runMigrations() {
-	// Create users table if not exists
-	// Split statements to avoid race conditions in parallel tests
+	// Drop and recreate to ensure schema is always up to date
+	d.Exec(`DROP TABLE IF EXISTS users CASCADE`)
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
