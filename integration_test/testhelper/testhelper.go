@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
-	"log"
 
 	"github.com/labstack/echo/v4"
 
@@ -27,28 +26,18 @@ const (
 
 func Setup() {
 	DB = db.NewTestDB(TestDSN)
-
-	DB.Exec("TRUNCATE TABLE users CASCADE")
-	DB.Exec("TRUNCATE TABLE feeds")
-	DB.Exec("TRUNCATE TABLE episodes")
-
 	RunMigrations()
 }
 
 func Teardown() {
-	DB.Exec("TRUNCATE TABLE users CASCADE")
-	DB.Exec("TRUNCATE TABLE feeds")
-	DB.Exec("TRUNCATE TABLE episodes")
 	DB.Close()
 }
 
 func RunMigrations() {
-	// Drop and recreate tables to ensure schema is always up to date
-	DB.Exec(`DROP TABLE IF EXISTS episodes CASCADE`)
-	DB.Exec(`DROP TABLE IF EXISTS feeds CASCADE`)
-	DB.Exec(`DROP TABLE IF EXISTS users CASCADE`)
+	// Use CREATE IF NOT EXISTS to avoid races with parallel test packages.
+	// Use ALTER TABLE to ensure schema evolution columns exist.
 
-	_, err := DB.Exec(`
+	DB.Exec(`
 		CREATE TABLE IF NOT EXISTS episodes (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -59,13 +48,10 @@ func RunMigrations() {
 			played BOOLEAN NOT NULL DEFAULT FALSE
 		)
 	`)
-	if err != nil {
-		log.Printf("Warning: episodes table creation: %v\n", err)
-	}
 	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_id ON episodes(feed_id)`)
 	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_episodes_feed_guid ON episodes(feed_guid)`)
 
-	_, err = DB.Exec(`
+	DB.Exec(`
 		CREATE TABLE IF NOT EXISTS feeds (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -76,12 +62,9 @@ func RunMigrations() {
 			synced_at TIMESTAMP
 		)
 	`)
-	if err != nil {
-		log.Printf("Warning: feeds table creation: %v\n", err)
-	}
 	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_feeds_user_id ON feeds(user_id)`)
 
-	_, err = DB.Exec(`
+	DB.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -91,9 +74,9 @@ func RunMigrations() {
 			google_id VARCHAR(255) UNIQUE
 		)
 	`)
-	if err != nil {
-		log.Panicf("CRITICAL: failed to create users table: %v", err)
-	}
+	// Ensure columns added by later migrations exist
+	DB.Exec(`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`)
+	DB.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE`)
 	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 	DB.Exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`)
 }
@@ -132,7 +115,11 @@ func UnmarshalResult[T any](result io.Reader) (*T, error) {
 }
 
 func TruncateAll() {
-	DB.Exec("TRUNCATE TABLE users CASCADE")
-	DB.Exec("TRUNCATE TABLE feeds")
-	DB.Exec("TRUNCATE TABLE episodes")
+	// Use DELETE instead of TRUNCATE to avoid ACCESS EXCLUSIVE locks
+	// that interfere with store tests running in parallel.
+	// Only delete users created by integration tests (emails ending in @example.com)
+	// to avoid interfering with store tests that use @test.com emails.
+	DB.Exec("DELETE FROM feeds")
+	DB.Exec("DELETE FROM episodes")
+	DB.Exec("DELETE FROM users WHERE email LIKE '%@example.com'")
 }
