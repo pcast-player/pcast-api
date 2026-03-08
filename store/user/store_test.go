@@ -50,8 +50,7 @@ func tearDown() {
 }
 
 func runMigrations() {
-	// Drop and recreate to ensure schema is always up to date
-	d.Exec(`DROP TABLE IF EXISTS users CASCADE`)
+	// Use CREATE IF NOT EXISTS + ALTER to avoid destroying tables used by parallel test packages
 	d.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY,
@@ -62,12 +61,17 @@ func runMigrations() {
 			google_id VARCHAR(255) UNIQUE
 		)
 	`)
+	// Ensure columns added by later migrations exist
+	d.Exec(`ALTER TABLE users ALTER COLUMN password DROP NOT NULL`)
+	d.Exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`)
 	d.Exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`)
 }
 
 func truncateTable() {
-	_, err := d.Exec("TRUNCATE TABLE users CASCADE")
+	// Only delete users created by store tests (emails ending in @test.com)
+	// to avoid interfering with integration tests running in parallel.
+	_, err := d.Exec("DELETE FROM users WHERE email LIKE '%@test.com'")
 	if err != nil {
 		// Table might not exist yet, ignore error
 		return
