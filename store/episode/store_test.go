@@ -63,7 +63,7 @@ func runMigrations() {
 }
 
 func truncateTable() {
-	_, err := d.Exec("TRUNCATE TABLE episodes")
+	_, err := d.Exec("DELETE FROM episodes")
 	if err != nil {
 		// Table might not exist yet, ignore error
 		return
